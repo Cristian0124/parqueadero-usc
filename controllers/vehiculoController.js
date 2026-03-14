@@ -18,7 +18,7 @@ exports.crearVehiculo = (req, res) => {
   );
 };
 
-// ✅ CORREGIDO: solo retorna vehículos del usuario autenticado
+// solo retorna vehículos del usuario autenticado
 exports.obtenerVehiculos = (req, res) => {
   const usuario_id = req.userId;
 
@@ -36,7 +36,7 @@ exports.eliminarVehiculo = (req, res) => {
   const { id } = req.params;
   const usuario_id = req.userId;
 
-  // ✅ Verifica que el vehículo le pertenece al usuario
+  // que el vehículo le pertenece al usuario
   db.query(
     "DELETE FROM vehiculos WHERE id = ? AND usuario_id = ?",
     [id, usuario_id],
