@@ -3,9 +3,9 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 
-const authRoutes = require("./routes/authRoutes");
-const vehiculoRoutes = require("./routes/vehiculoRoutes");
-const parqueoRoutes = require("./routes/parqueoRoutes");
+const authRoutes = require("./rutas/authRoutes");
+const vehiculoRoutes = require("./rutas/vehiculoRoutes");
+const parqueoRoutes = require("./rutas/parqueoRoutes");
 
 const app = express();
 
@@ -23,7 +23,6 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-// Railway requiere escuchar en 0.0.0.0, no solo en localhost
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Servidor corriendo en puerto ${PORT}`);
   console.log(`🌍 Entorno: ${process.env.NODE_ENV || "desarrollo"}`);
