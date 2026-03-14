@@ -8,7 +8,7 @@ API REST para sistema de gestión de parqueadero de la Universidad Santiago de C
 - JWT para autenticación
 - bcrypt para contraseñas
 
-## 🚀 Despliegue en Railway
+## Despliegue en Railway
 
 ### 1. Crear proyecto en Railway
 1. Ve a [railway.app](https://railway.app) e inicia sesión con GitHub
