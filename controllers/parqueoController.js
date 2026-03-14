@@ -7,7 +7,7 @@ exports.registrarEntrada = (req, res) => {
     return res.status(400).json({ message: "vehiculo_id es requerido" });
   }
 
-  // ✅ Verifica que no haya una entrada activa para este vehículo
+  // Verificacion que no haya una entrada activa para este vehículo
   db.query(
     "SELECT id FROM parqueos WHERE vehiculo_id = ? AND estado = 'dentro'",
     [vehiculo_id],
