@@ -1,31 +1,30 @@
--- Script de creación de base de datos
--- Parqueadero USC
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+require("dotenv").config();
 
-CREATE DATABASE IF NOT EXISTS parqueadero_usc;
+const authRoutes = require("./routes/authRoutes");
+const vehiculoRoutes = require("./routes/vehiculoRoutes");
+const parqueoRoutes = require("./routes/parqueoRoutes");
 
-USE parqueadero_usc;
+const app = express();
 
-CREATE TABLE IF NOT EXISTS usuarios (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(100) NOT NULL,
-  email VARCHAR(100) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+app.use(cors());
+app.use(bodyParser.json());
 
-CREATE TABLE IF NOT EXISTS vehiculos (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  placa VARCHAR(10) NOT NULL,
-  tipo VARCHAR(50) NOT NULL,
-  usuario_id INT NOT NULL,
-  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
+// Rutas
+app.use("/api/auth", authRoutes);
+app.use("/api/vehiculos", vehiculoRoutes);
+app.use("/api/parqueos", parqueoRoutes);
 
-CREATE TABLE IF NOT EXISTS parqueos (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  vehiculo_id INT NOT NULL,
-  hora_entrada DATETIME NOT NULL,
-  hora_salida DATETIME,
-  estado VARCHAR(20) NOT NULL DEFAULT 'dentro',
-  FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id) ON DELETE CASCADE
-);
+// Ruta de prueba
+app.get("/", (req, res) => {
+  res.json({ message: "🚗 API Parqueadero USC funcionando" });
+});
+
+const PORT = process.env.PORT || 3000;
+// Railway requiere escuchar en 0.0.0.0, no solo en localhost
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ Servidor corriendo en puerto ${PORT}`);
+  console.log(`🌍 Entorno: ${process.env.NODE_ENV || "desarrollo"}`);
+});
