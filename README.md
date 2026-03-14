@@ -1,8 +1,8 @@
-# 🚗 Parqueadero USC - API REST
+# Parqueadero USC - API REST
 
 API REST para sistema de gestión de parqueadero de la Universidad Santiago de Cali.
 
-## 🛠️ Tecnologías
+##Tecnologías
 - Node.js + Express
 - MySQL / Railway MySQL
 - JWT para autenticación
@@ -43,7 +43,7 @@ En el servicio → **"Settings"** → **"Networking"** → **"Generate Domain"**
 
 ---
 
-## 📡 Endpoints de la API
+## Endpoints de la API
 
 ### Autenticación
 | Método | Ruta | Descripción |
@@ -67,7 +67,7 @@ En el servicio → **"Settings"** → **"Networking"** → **"Generate Domain"**
 
 ---
 
-## 💻 Instalación local
+## Instalación local
 
 ```bash
 git clone https://github.com/Cristian0124/parqueadero-usc.git
