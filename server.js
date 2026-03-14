@@ -23,6 +23,8 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+// Railway requiere escuchar en 0.0.0.0, no solo en localhost
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Servidor corriendo en puerto ${PORT}`);
+  console.log(`🌍 Entorno: ${process.env.NODE_ENV || "desarrollo"}`);
 });

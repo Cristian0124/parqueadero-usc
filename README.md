@@ -1,67 +1,49 @@
-# 🚗 Parqueadero USC
+# 🚗 Parqueadero USC - API REST
 
-Sistema de gestión de parqueadero desarrollado con Node.js, Express y MySQL.
+API REST para sistema de gestión de parqueadero de la Universidad Santiago de Cali.
 
-## 📋 Requisitos
+## 🛠️ Tecnologías
+- Node.js + Express
+- MySQL / Railway MySQL
+- JWT para autenticación
+- bcrypt para contraseñas
 
-- Node.js v18+
-- MySQL 8+
-- Git
+## 🚀 Despliegue en Railway
 
-## 🗄️ Configuración de Base de Datos
+### 1. Crear proyecto en Railway
+1. Ve a [railway.app](https://railway.app) e inicia sesión con GitHub
+2. Clic en **"New Project"** → **"Deploy from GitHub repo"**
+3. Selecciona este repositorio
 
-Ejecuta este script en MySQL:
+### 2. Agregar base de datos MySQL
+1. En el proyecto, clic **"New Service"** → **"Database"** → **"MySQL"**
+2. Espera que se cree la BD
 
-```sql
-CREATE DATABASE parqueadero_usc;
+### 3. Importar la base de datos
+1. Ve al servicio MySQL → pestaña **"Connect"**
+2. Usa los datos de conexión con TablePlus o DBeaver
+3. Ejecuta el archivo `database.sql`
 
-USE parqueadero_usc;
+### 4. Configurar variables de entorno
+En el servicio Node.js → pestaña **"Variables"**, agrega:
 
-CREATE TABLE usuarios (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(100),
-  email VARCHAR(100) UNIQUE,
-  password VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+| Variable | Valor |
+|----------|-------|
+| DB_HOST | (copiarlo de MySQL en Railway) |
+| DB_PORT | (copiarlo de MySQL en Railway) |
+| DB_USER | root |
+| DB_PASSWORD | (copiarlo de MySQL en Railway) |
+| DB_NAME | railway |
+| DB_SSL | false |
+| JWT_SECRET | un_secreto_largo_y_seguro |
+| NODE_ENV | production |
 
-CREATE TABLE vehiculos (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  placa VARCHAR(10),
-  tipo VARCHAR(50),
-  usuario_id INT,
-  FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-);
+### 5. Obtener URL pública
+En el servicio → **"Settings"** → **"Networking"** → **"Generate Domain"**
 
-CREATE TABLE parqueos (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  vehiculo_id INT,
-  hora_entrada DATETIME,
-  hora_salida DATETIME,
-  estado VARCHAR(20),
-  FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
-);
-```
+---
 
-## ⚙️ Instalación
-
-```bash
-# 1. Clonar el repositorio
-git clone https://github.com/TU_USUARIO/parqueadero-usc.git
-cd parqueadero-usc/backend
-
-# 2. Instalar dependencias
-npm install
-
-# 3. Crear archivo de variables de entorno
-cp .env.example .env
-# Edita .env con tus credenciales
-
-# 4. Ejecutar el servidor
-npm run dev
-```
-
-## 🌐 Endpoints
+## 📡 Endpoints de la API
 
 ### Autenticación
 | Método | Ruta | Descripción |
@@ -72,27 +54,30 @@ npm run dev
 ### Vehículos (requiere token)
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET | `/api/vehiculos` | Listar mis vehículos |
 | POST | `/api/vehiculos` | Registrar vehículo |
+| GET | `/api/vehiculos` | Obtener mis vehículos |
 | DELETE | `/api/vehiculos/:id` | Eliminar vehículo |
 
-### Parqueo (requiere token)
+### Parqueos (requiere token)
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/parqueos/entrada` | Registrar entrada |
-| POST | `/api/parqueos/salida` | Registrar salida |
-| GET | `/api/parqueos` | Ver historial |
+| PUT | `/api/parqueos/salida` | Registrar salida |
+| GET | `/api/parqueos` | Ver todos los parqueos |
 
-## 🔐 Autenticación
+---
 
-Las rutas protegidas requieren el header:
-```
-Authorization: Bearer <token>
-```
-
-## 🛠️ Scripts
+## 💻 Instalación local
 
 ```bash
-npm run dev    # Desarrollo con nodemon
-npm start      # Producción
+git clone https://github.com/Cristian0124/parqueadero-usc.git
+cd parqueadero-usc
+npm install
+cp .env.example .env
+# Edita .env con tus datos locales
+npm run dev
 ```
+
+## 📄 Variables de entorno
+
+Ver `.env.example` para referencia completa.
