@@ -1,14 +1,14 @@
-# 🚗 Parqueadero USC
+# Parqueadero USC
 
 Sistema de gestión de parqueadero desarrollado con Node.js, Express y MySQL.
 
-## 📋 Requisitos
+## Requisitos
 
 - Node.js v18+
 - MySQL 8+
 - Git
 
-## 🗄️ Configuración de Base de Datos
+## Configuración de Base de Datos
 
 Ejecuta este script en MySQL:
 
@@ -43,7 +43,7 @@ CREATE TABLE parqueos (
 );
 ```
 
-## ⚙️ Instalación
+## Instalación
 
 ```bash
 # 1. Clonar el repositorio
@@ -61,7 +61,7 @@ cp .env.example .env
 npm run dev
 ```
 
-## 🌐 Endpoints
+## Endpoints
 
 ### Autenticación
 | Método | Ruta | Descripción |
@@ -83,14 +83,14 @@ npm run dev
 | POST | `/api/parqueos/salida` | Registrar salida |
 | GET | `/api/parqueos` | Ver historial |
 
-## 🔐 Autenticación
+## Autenticación
 
 Las rutas protegidas requieren el header:
 ```
 Authorization: Bearer <token>
 ```
 
-## 🛠️ Scripts
+## Scripts
 
 ```bash
 npm run dev    # Desarrollo con nodemon
