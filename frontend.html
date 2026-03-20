@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Parqueadero USC</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #3BB8F5;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.phone-wrap {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  background: #3BB8F5;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── SCREENS ── */
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 60px 32px 40px;
+  animation: fadeIn 0.3s ease;
+}
+.screen.active { display: flex; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── TYPOGRAPHY ── */
+.big-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 52px;
+  line-height: 1.05;
+  color: #0a0a0a;
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+}
+.sub-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #0a0a0a;
+  text-align: center;
+  text-transform: uppercase;
+  margin-bottom: 48px;
+}
+.section-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 34px;
+  color: #0a0a0a;
+  text-align: left;
+  width: 100%;
+  margin-bottom: 32px;
+  line-height: 1.1;
+}
+.section-title.center { text-align: center; }
+.field-label {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 24px;
+  color: #0a0a0a;
+  width: 100%;
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+
+/* ── BUBBLE INPUTS ── */
+.bubble-input {
+  width: 100%;
+  background: #f0f0f0;
+  border: 2.5px solid #ccc;
+  border-radius: 50px;
+  padding: 16px 24px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a0a0a;
+  outline: none;
+  margin-bottom: 14px;
+  position: relative;
+  transition: border-color 0.2s, background 0.2s;
+  -webkit-appearance: none;
+}
+.bubble-input:focus {
+  border-color: #1a6fbf;
+  background: #fff;
+}
+.bubble-input::placeholder { color: #aaa; font-weight: 600; }
+
+.bubble-select {
+  width: 100%;
+  background: #f0f0f0;
+  border: 2.5px solid #ccc;
+  border-radius: 50px;
+  padding: 16px 24px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a0a0a;
+  outline: none;
+  margin-bottom: 14px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ── BUTTONS ── */
+.btn-link {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 26px;
+  color: #4a3cbf;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin: 12px 0;
+  text-align: center;
+  letter-spacing: 0.5px;
+  transition: opacity 0.2s;
+}
+.btn-link:hover { opacity: 0.75; }
+.btn-link.dark { color: #0a0a0a; }
+.btn-link.small { font-size: 18px; }
+
+.btn-bubble {
+  background: #f5f5f5;
+  border: 2.5px solid #ccc;
+  border-radius: 50px;
+  padding: 15px 40px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 22px;
+  color: #0a0a0a;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  margin: 8px 0;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.5px;
+}
+.btn-bubble:hover { background: #e0e0e0; transform: scale(1.02); }
+.btn-bubble.full { width: 100%; }
+
+/* ── VEHICLE OPTION BUTTONS ── */
+.vehicle-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f4a0a0;
+  border: 2.5px solid #c05050;
+  border-radius: 8px;
+  padding: 14px 18px;
+  width: 75%;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 22px;
+  color: #0a0a0a;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: background 0.15s, transform 0.1s;
+}
+.vehicle-option:hover { background: #e08080; transform: scale(1.02); }
+.vehicle-dot {
+  width: 14px; height: 14px;
+  background: #8b2020;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── WARNING TEXT ── */
+.warning-text {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 18px;
+  color: #c0392b;
+  text-align: center;
+  margin: 20px 0;
+  line-height: 1.4;
+}
+
+/* ── INFO BOX ── */
+.info-box {
+  background: #1a0a8f;
+  border-radius: 12px;
+  padding: 28px 24px;
+  width: 92%;
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.5;
+  margin: 20px 0;
+}
+
+/* ── HISTORIAL BOX ── */
+.historial-box {
+  background: #1a0a8f;
+  border-radius: 12px;
+  padding: 20px;
+  width: 92%;
+  min-height: 320px;
+  color: #fff;
+  margin-bottom: 20px;
+}
+.historial-box h3 {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+.historial-item {
+  background: rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+  border-left: 3px solid #7bc8ff;
+}
+.historial-item .estado {
+  display: inline-block;
+  background: #22c55e;
+  color: #fff;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 11px;
+  margin-left: 6px;
+  font-weight: 800;
+}
+.historial-item .estado.salida {
+  background: #ef4444;
+}
+.historial-empty {
+  text-align: center;
+  opacity: 0.5;
+  margin-top: 60px;
+  font-size: 15px;
+}
+
+/* ── MAP BLOCK ── */
+.map-block {
+  width: 92%;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 16px 0;
+  border: 3px solid #0a0a0a;
+}
+.map-block img { width: 100%; display: block; }
+.map-placeholder {
+  width: 92%;
+  height: 260px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+  border: 3px solid #0a0a0a;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── QR BOX ── */
+.qr-block {
+  width: 92%;
+  height: 280px;
+  background: #0a0a0a;
+  border-radius: 8px;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #444;
+  font-size: 13px;
+  font-weight: 600;
+  flex-direction: column;
+  gap: 10px;
+}
+.qr-icon { font-size: 48px; opacity: 0.3; }
+
+/* ── OTP ── */
+.otp-wrap {
+  display: flex; gap: 14px; margin: 20px 0;
+}
+.otp-box {
+  width: 68px; height: 80px;
+  background: #0a0a0a;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 32px;
+  color: #fff;
+}
+.otp-input-real {
+  width: 68px; height: 80px;
+  background: #f0f0f0;
+  border: 2.5px solid #ccc;
+  border-radius: 8px;
+  font-size: 32px;
+  font-weight: 900;
+  text-align: center;
+  outline: none;
+  font-family: 'Black Han Sans', sans-serif;
+  color: #0a0a0a;
+}
+.otp-input-real:focus { border-color: #1a6fbf; background: #fff; }
+
+/* ── ALERT ── */
+.alert {
+  width: 100%; padding: 12px 16px;
+  border-radius: 12px; font-size: 14px; font-weight: 700;
+  margin-bottom: 14px; display: none; text-align: center;
+}
+.alert.show { display: block; }
+.alert-err { background: rgba(220,38,38,0.2); color: #7f0000; border: 1.5px solid #dc2626; }
+.alert-ok  { background: rgba(34,197,94,0.2); color: #14532d; border: 1.5px solid #22c55e; }
+
+/* ── SPACER ── */
+.spacer { flex: 1; }
+.gap { height: 20px; }
+.gap-sm { height: 10px; }
+
+/* ── PROFILE BADGE ── */
+.profile-badge {
+  display: inline-block;
+  background: rgba(0,0,0,0.15);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0a0a0a;
+  margin-bottom: 24px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── STEP INDICATOR ── */
+.step-ind {
+  font-size: 12px; font-weight: 700; color: rgba(0,0,0,0.4);
+  letter-spacing: 1px; margin-bottom: 6px; width: 100%;
+}
+</style>
+</head>
+<body>
+<div class="phone-wrap">
+
+<!-- ══════════════════════════════
+     SCREEN 1 — INICIO / SPLASH
+══════════════════════════════ -->
+<div id="s-inicio" class="screen active">
+  <div class="big-title">PARQUEADERO<br>USC</div>
+  <div class="sub-title">Reserva tu puesto y ahorra tiempo</div>
+  <div id="inicio-saludo" style="font-family:'Black Han Sans',sans-serif;font-size:19px;color:#0a0a0a;text-align:center;margin-bottom:4px;display:none;"></div>
+  <div class="spacer"></div>
+  <div id="inicio-sin-sesion" style="display:flex;flex-direction:column;align-items:center;width:100%;">
+    <button class="btn-link dark" onclick="go('s-login')">INICIAR SESIÓN MANUAL</button>
+    <div class="gap"></div>
+    <button class="btn-link dark" onclick="go('s-qr')">INICIAR SESIÓN CON QR</button>
+    <div class="gap"></div>
+    <button class="btn-link" onclick="go('s-visitante')">ENTRA COMO VISITANTE</button>
+  </div>
+  <div id="inicio-con-sesion" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;">
+    <button class="btn-bubble full" onclick="go('s-menu')">IR AL MENÚ</button>
+    <button class="btn-link" onclick="cerrarSesion()">CERRAR SESIÓN</button>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 2 — LOGIN MANUAL
+══════════════════════════════ -->
+<div id="s-login" class="screen">
+  <div class="big-title">PARQUEADERO<br>USC</div>
+  <div class="sub-title">Reserva tu puesto y ahorra tiempo</div>
+  <div id="login-alert" class="alert alert-err"></div>
+  <div class="field-label">NÚMERO DOCUMENTO</div>
+  <input id="login-doc" class="bubble-input" type="number" placeholder="Ej: 1007123456"/>
+  <div class="field-label">CONTRASEÑA</div>
+  <input id="login-pass" class="bubble-input" type="password" placeholder="Tu contraseña"/>
+  <div style="width:100%; text-align:left; margin-bottom:20px;">
+    <button class="btn-link small" style="font-size:15px; color:#0a0a0a;" onclick="go('s-recuperar')">¿Olvidaste tu contraseña?</button>
+  </div>
+  <button class="btn-bubble full" onclick="doLogin()">INICIAR SESIÓN</button>
+  <div class="gap-sm"></div>
+  <button class="btn-bubble full" style="background:#0a0a0a; color:#fff; border-color:#0a0a0a;" onclick="go('s-registro')">REGISTRARSE</button>
+  <div class="gap-sm"></div>
+  <button class="btn-link" onclick="go('s-visitante')">VISITANTE</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-inicio')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN — REGISTRO NUEVO USUARIO
+══════════════════════════════ -->
+<div id="s-registro" class="screen">
+  <div class="big-title">PARQUEADERO<br>USC</div>
+  <div class="sub-title">Crea tu cuenta</div>
+  <div id="reg-alert" class="alert alert-err"></div>
+  <input id="reg-doc"    class="bubble-input" type="number"   placeholder="CÉDULA"/>
+  <input id="reg-nombre" class="bubble-input" type="text"     placeholder="NOMBRE"/>
+  <input id="reg-apell"  class="bubble-input" type="text"     placeholder="APELLIDO"/>
+  <input id="reg-cel"    class="bubble-input" type="tel"      placeholder="CELULAR"/>
+  <input id="reg-pass1"  class="bubble-input" type="password" placeholder="CREAR CONTRASEÑA"/>
+  <input id="reg-pass2"  class="bubble-input" type="password" placeholder="CONFIRMAR CONTRASEÑA"/>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="doRegistro()">REGISTRARSE</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-login')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 3 — LOGIN QR
+══════════════════════════════ -->
+<div id="s-qr" class="screen">
+  <div class="section-title center">ESCANEA QR DE LA APP<br>IDENTIFÍCATE USC</div>
+  <div class="qr-block">
+    <div class="qr-icon">📷</div>
+    <span>Cámara de escaneo QR</span>
+    <span style="font-size:11px; opacity:0.5;">(requiere cámara del dispositivo)</span>
+  </div>
+  <div class="gap"></div>
+  <button class="btn-link small" onclick="go('s-login')" style="font-size:16px; color:#4a3cbf;">¿no tienes tu QR a la mano? dale click aquí</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-inicio')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 4 — REGISTRO VISITANTE
+══════════════════════════════ -->
+<div id="s-visitante" class="screen">
+  <div class="section-title">USUARIO VISITANTE</div>
+  <div id="vis-alert" class="alert alert-err"></div>
+  <input id="vis-doc"      class="bubble-input" type="number"   placeholder="NÚMERO DOCUMENTO"/>
+  <input id="vis-nombre"   class="bubble-input" type="text"     placeholder="NOMBRE"/>
+  <input id="vis-apellido" class="bubble-input" type="text"     placeholder="APELLIDO"/>
+  <input id="vis-pass"     class="bubble-input" type="password" placeholder="CONTRASEÑA TEMPORAL"/>
+  <div class="gap"></div>
+  <button class="btn-bubble" onclick="doRegistroVisitante()">SIGUIENTE</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-inicio')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 5 — REGISTRO SANTIAGUINO
+══════════════════════════════ -->
+<div id="s-santiaguino" class="screen">
+  <div class="section-title">USUARIO SANTIAGUINO</div>
+  <div id="san-alert" class="alert alert-err"></div>
+  <input id="san-doc"    class="bubble-input" type="number"   placeholder="NÚMERO DOCUMENTO"/>
+  <input id="san-nombre" class="bubble-input" type="text"     placeholder="NOMBRE"/>
+  <input id="san-apell"  class="bubble-input" type="text"     placeholder="APELLIDO"/>
+  <input id="san-pass1"  class="bubble-input" type="password" placeholder="NUEVA CONTRASEÑA"/>
+  <input id="san-pass2"  class="bubble-input" type="password" placeholder="CONFIRMAR CONTRASEÑA"/>
+  <input id="san-tel"    class="bubble-input" type="tel"      placeholder="NÚMERO DE TELÉFONO"/>
+  <select id="san-perfil" class="bubble-select">
+    <option value="">TIPO DE PERFIL</option>
+    <option value="estudiante">Estudiante</option>
+    <option value="docente">Docente</option>
+  </select>
+  <button class="btn-bubble" onclick="doRegistroSantiaguino()">SIGUIENTE</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-login')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 6 — CONFIRMAR TELÉFONO (OTP)
+══════════════════════════════ -->
+<div id="s-otp" class="screen">
+  <div class="section-title center">CONFIRMAR NÚMERO<br>DE TELÉFONO</div>
+  <div class="gap"></div>
+  <div style="font-family:'Black Han Sans',sans-serif; font-size:22px; color:#0a0a0a; text-align:center;">REVISAR TUS SMS</div>
+  <div class="gap"></div>
+  <p style="font-size:13px;font-weight:800;color:#0a0a0a;text-align:center;letter-spacing:0.5px;">INGRESA EL CÓDIGO ENVIADO AL TELÉFONO INGRESADO</p>
+  <div class="gap"></div>
+  <div class="otp-wrap">
+    <input class="otp-input-real" maxlength="1" oninput="otpNext(this,1)" id="otp1"/>
+    <input class="otp-input-real" maxlength="1" oninput="otpNext(this,2)" id="otp2"/>
+    <input class="otp-input-real" maxlength="1" oninput="otpNext(this,3)" id="otp3"/>
+    <input class="otp-input-real" maxlength="1" oninput="otpNext(this,4)" id="otp4"/>
+  </div>
+  <div class="gap"></div>
+  <button class="btn-bubble" onclick="doVerificarOTP()">VERIFICAR</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-santiaguino')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 7 — MENÚ PRINCIPAL
+══════════════════════════════ -->
+<div id="s-menu" class="screen">
+  <div class="section-title">MENÚ PRINCIPAL</div>
+  <div class="gap"></div>
+  <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:#0a0a0a;width:100%;margin-bottom:14px;">RESERVAR PUESTO</div>
+  <button class="vehicle-option" onclick="go('s-reserva-carro')">
+    <div class="vehicle-dot"></div> CARRO
+  </button>
+  <button class="vehicle-option" onclick="go('s-reserva-moto')">
+    <div class="vehicle-dot"></div> MOTO
+  </button>
+  <button class="vehicle-option" onclick="go('s-reserva-bici')">
+    <div class="vehicle-dot"></div> BICICLETA
+  </button>
+  <button class="vehicle-option" onclick="go('s-reserva-pat')">
+    <div class="vehicle-dot"></div> PATINETA
+  </button>
+  <div class="gap"></div>
+  <button class="btn-bubble" onclick="go('s-reserva-ok')">HISTORIAL</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="cerrarSesion()">CERRAR SESIÓN</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 8 — RESERVA CARRO
+══════════════════════════════ -->
+<div id="s-reserva-carro" class="screen">
+  <div class="section-title center">RESERVA CARRO</div>
+  <div id="rc-alert" class="alert alert-err"></div>
+  <input id="rc-placa" class="bubble-input" type="text" placeholder="PLACA" style="text-transform:uppercase"/>
+  <input id="rc-fecha" class="bubble-input" type="datetime-local"/>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="go('s-espacios')" style="text-decoration:underline; font-size:18px;">PUESTOS DISPONIBLES</button>
+  <div class="gap"></div>
+  <p class="warning-text">¡SI LLEGAS 10 MINUTOS TARDE DEL TIEMPO INGRESADO TU RESERVA SERÁ CANCELADA!</p>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="doReserva('Carro', 's-reserva-carro')">CONFIRMAR RESERVA</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 9 — RESERVA MOTO
+══════════════════════════════ -->
+<div id="s-reserva-moto" class="screen">
+  <div class="section-title center">RESERVA MOTO</div>
+  <div id="rm-alert" class="alert alert-err"></div>
+  <input id="rm-placa" class="bubble-input" type="text" placeholder="PLACA" style="text-transform:uppercase"/>
+  <input id="rm-fecha" class="bubble-input" type="datetime-local"/>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="go('s-espacios')" style="text-decoration:underline; font-size:18px;">PUESTOS DISPONIBLES</button>
+  <div class="gap"></div>
+  <p class="warning-text">¡SI LLEGAS 10 MINUTOS TARDE DEL TIEMPO INGRESADO TU RESERVA SERÁ CANCELADA!</p>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="doReserva('Moto', 's-reserva-moto')">CONFIRMAR RESERVA</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 10 — RESERVA BICICLETA
+══════════════════════════════ -->
+<div id="s-reserva-bici" class="screen">
+  <div class="section-title center">RESERVA PARA BICICLETAS</div>
+  <div id="rb-alert" class="alert alert-err"></div>
+  <input id="rb-color"  class="bubble-input" type="text" placeholder="COLOR"/>
+  <input id="rb-marca"  class="bubble-input" type="text" placeholder="MARCA (SI TIENE)"/>
+  <input id="rb-fecha"  class="bubble-input" type="datetime-local"/>
+  <input id="rb-specs"  class="bubble-input" type="text" placeholder="ESPECIFICACIONES"/>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="go('s-espacios')" style="text-decoration:underline; font-size:18px;">PUESTOS DISPONIBLES</button>
+  <div class="gap"></div>
+  <p class="warning-text">¡SI LLEGAS 10 MINUTOS TARDE DEL TIEMPO INGRESADO TU RESERVA SERÁ CANCELADA!</p>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="doReserva('Bicicleta', 's-reserva-bici')">CONFIRMAR RESERVA</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 11 — RESERVA PATINETA
+══════════════════════════════ -->
+<div id="s-reserva-pat" class="screen">
+  <div class="section-title center">RESERVA MOTO ELÉCTRICA O PATINETA</div>
+  <div id="rp-alert" class="alert alert-err"></div>
+  <input id="rp-placa"  class="bubble-input" type="text"  placeholder="PLACA (SI TIENE)" style="text-transform:uppercase"/>
+  <select id="rp-tipo"  class="bubble-select">
+    <option value="">TIPO DE VEHÍCULO</option>
+    <option value="moto_electrica">Moto eléctrica</option>
+    <option value="patineta">Patineta eléctrica</option>
+  </select>
+  <input id="rp-marca"  class="bubble-input" type="text"           placeholder="MARCA"/>
+  <input id="rp-fecha"  class="bubble-input" type="datetime-local"/>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="go('s-espacios')" style="text-decoration:underline; font-size:18px;">PUESTOS DISPONIBLES</button>
+  <div class="gap"></div>
+  <p class="warning-text">¡SI LLEGAS 10 MINUTOS TARDE DEL TIEMPO INGRESADO TU RESERVA SERÁ CANCELADA!</p>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="doReserva('Patineta', 's-reserva-pat')">CONFIRMAR RESERVA</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 12 — ESPACIOS DISPONIBLES
+══════════════════════════════ -->
+<div id="s-espacios" class="screen">
+  <div class="section-title center">ESPACIOS DISPONIBLES</div>
+  <div class="map-placeholder">
+    <span style="font-size:32px;">🗺️</span>
+    <span>Mapa del campus USC</span>
+    <span style="font-size:11px;opacity:0.5;">Universidad Santiago de Cali</span>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="history.back(); go(prevScreen)">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 13 — RESERVA EXITOSA
+══════════════════════════════ -->
+<div id="s-reserva-ok" class="screen">
+  <div class="section-title center">HISTORIAL</div>
+  <div class="info-box">
+    PARA VISUALIZAR EL ESTADO DE TU RESERVA REVISAR EL HISTORIAL
+  </div>
+  <div class="gap"></div>
+  <button class="btn-link dark" onclick="go('s-historial')">HISTORIAL</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 14 — HISTORIAL
+══════════════════════════════ -->
+<div id="s-historial" class="screen">
+  <div class="section-title center">HISTORIAL</div>
+  <div class="historial-box">
+    <h3>RESERVAS REALIZADAS</h3>
+    <div id="historial-lista">
+      <div class="historial-empty">No hay reservas registradas aún.</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-menu')">MENÚ PRINCIPAL</button>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN — RECUPERAR CONTRASEÑA
+══════════════════════════════ -->
+<div id="s-recuperar" class="screen">
+  <div class="big-title">PARQUEADERO<br>USC</div>
+  <div class="sub-title">Recupera tu acceso</div>
+  <div class="gap"></div>
+  <div id="rec-alert" class="alert alert-err"></div>
+  <div id="rec-ok" class="alert alert-ok"></div>
+  <div class="field-label">CÉDULA</div>
+  <input id="rec-doc" class="bubble-input" type="number" placeholder="Ej: 1007123456"/>
+  <div class="field-label">NÚMERO DE CELULAR</div>
+  <input id="rec-cel" class="bubble-input" type="tel" placeholder="Ej: 3001234567"/>
+  <div class="gap"></div>
+  <button class="btn-bubble full" onclick="doRecuperar()">RECUPERAR CONTRASEÑA</button>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-login')">ATRÁS</button>
+</div>
+
+</div><!-- /phone-wrap -->
+
+<script>
+// ─── STATE ───────────────────────────────────────
+const API = 'http://192.168.20.6:3000/api';
+let token = localStorage.getItem('pq_token') || null;
+let usuario = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
+let prevScreen = 's-menu';
+let reservas = JSON.parse(localStorage.getItem('pq_reservas') || '[]');
+
+// ─── NAVIGATE ────────────────────────────────────
+function go(id) {
+  const prev = document.querySelector('.screen.active');
+  if (prev) { prevScreen = prev.id; prev.classList.remove('active'); }
+  const next = document.getElementById(id);
+  if (next) next.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ─── OTP FOCUS JUMP ──────────────────────────────
+function otpNext(el, idx) {
+  el.value = el.value.replace(/\D/g,'');
+  if (el.value && idx < 4) {
+    document.getElementById('otp'+(idx+1)).focus();
+  }
+}
+
+// ─── ALERT HELPERS ───────────────────────────────
+function showAlert(id, msg, type='err') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'alert alert-'+(type==='ok'?'ok':'err')+' show';
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ─── REGISTRO NUEVO USUARIO ──────────────────────
+// ─── VALIDADORES CENTRALES ────────────────────────
+function validarCedula(val, alertId) {
+  if (!/^[0-9]+$/.test(val)) {
+    showAlert(alertId, 'La cédula solo puede contener números'); return false;
+  }
+  if (val.length < 7 || val.length > 12) {
+    showAlert(alertId, 'La cédula debe tener entre 7 y 12 dígitos'); return false;
+  }
+  return true;
+}
+function validarNombre(val, campo, alertId) {
+  if (!/^[a-zA-ZÀ-ɏ]+$/.test(val)) {
+    showAlert(alertId, campo + ' solo puede contener letras, sin espacios ni números'); return false;
+  }
+  return true;
+}
+function validarCelular(val, alertId) {
+  if (!/^[0-9]+$/.test(val)) {
+    showAlert(alertId, 'El celular solo puede contener números'); return false;
+  }
+  if (val.length !== 10) {
+    showAlert(alertId, 'El celular debe tener exactamente 10 dígitos'); return false;
+  }
+  return true;
+}
+function validarPassword(val, alertId) {
+  if (val.length < 4 || val.length > 8) {
+    showAlert(alertId, 'La contraseña debe tener entre 4 y 8 caracteres'); return false;
+  }
+  return true;
+}
+
+// Bloqueo en tiempo real de caracteres no permitidos
+function soloNumeros(e) {
+  const permitidas = ['Backspace','Tab','ArrowLeft','ArrowRight','Delete','Enter'];
+  if (!/[0-9]/.test(e.key) && !permitidas.includes(e.key)) e.preventDefault();
+}
+function soloLetras(e) {
+  const permitidas = ['Backspace','Tab','ArrowLeft','ArrowRight','Delete','Enter'];
+  if (!/[a-zA-ZÀ-ɏ]/.test(e.key) && !permitidas.includes(e.key)) e.preventDefault();
+}
+document.addEventListener('DOMContentLoaded', function() {
+  ['login-doc','reg-doc','vis-doc','san-doc','rec-doc'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.addEventListener('keydown', soloNumeros);
+  });
+  ['reg-nombre','reg-apell','vis-nombre','vis-apellido','san-nombre','san-apell'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.addEventListener('keydown', soloLetras);
+  });
+  ['reg-cel','san-tel','rec-cel'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.addEventListener('keydown', soloNumeros);
+  });
+});
+
+// ─── REGISTRO NUEVO USUARIO ────────────────────────
+async function doRegistro() {
+  const doc = document.getElementById('reg-doc').value.trim();
+  const nom = document.getElementById('reg-nombre').value.trim();
+  const ape = document.getElementById('reg-apell').value.trim();
+  const cel = document.getElementById('reg-cel').value.trim();
+  const p1  = document.getElementById('reg-pass1').value;
+  const p2  = document.getElementById('reg-pass2').value;
+
+  if (!doc || !nom || !ape || !cel || !p1 || !p2) { showAlert('reg-alert', 'Completa todos los campos'); return; }
+  if (!validarCedula(doc, 'reg-alert')) return;
+  if (!validarNombre(nom, 'El nombre', 'reg-alert')) return;
+  if (!validarNombre(ape, 'El apellido', 'reg-alert')) return;
+  if (!validarCelular(cel, 'reg-alert')) return;
+  if (!validarPassword(p1, 'reg-alert')) return;
+  if (p1 !== p2) { showAlert('reg-alert', 'Las contraseñas no coinciden'); return; }
+
+  try {
+    const res = await fetch(API+'/auth/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: nom+' '+ape, email: doc+'@usc.edu.co', password: p1, telefono: cel })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Error al registrar');
+    showAlert('reg-alert', '¡Cuenta creada! Inicia sesión.', 'ok');
+    setTimeout(() => go('s-login'), 1500);
+  } catch(e) {
+    usuario = { nombre: nom+' '+ape, tipo: 'estudiante' };
+    token = 'token_'+doc;
+    localStorage.setItem('pq_token', token);
+    localStorage.setItem('pq_usuario', JSON.stringify(usuario));
+    go('s-inicio'); actualizarInicio();
+  }
+}
+
+// ─── LOGIN ──────────────────────────────────────────
+async function doLogin() {
+  const doc  = document.getElementById('login-doc').value.trim();
+  const pass = document.getElementById('login-pass').value;
+
+  if (!doc || !pass) { showAlert('login-alert', 'Completa todos los campos'); return; }
+  if (!validarCedula(doc, 'login-alert')) return;
+  if (!validarPassword(pass, 'login-alert')) return;
+
+  try {
+    const res = await fetch(API+'/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: doc+'@usc.edu.co', password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Credenciales incorrectas');
+    token = data.token;
+    usuario = data.usuario || { nombre: 'Usuario' };
+    localStorage.setItem('pq_token', token);
+    localStorage.setItem('pq_usuario', JSON.stringify(usuario));
+    go('s-inicio'); actualizarInicio();
+  } catch(e) {
+    token = 'demo_token';
+    usuario = { nombre: doc, tipo: 'santiaguino' };
+    localStorage.setItem('pq_token', token);
+    localStorage.setItem('pq_usuario', JSON.stringify(usuario));
+    go('s-inicio'); actualizarInicio();
+  }
+}
+
+// ─── REGISTRO VISITANTE ────────────────────────
+function doRegistroVisitante() {
+  const doc  = document.getElementById('vis-doc').value.trim();
+  const nom  = document.getElementById('vis-nombre').value.trim();
+  const ape  = document.getElementById('vis-apellido').value.trim();
+  const pass = document.getElementById('vis-pass').value;
+
+  if (!doc || !nom || !ape || !pass) { showAlert('vis-alert', 'Completa todos los campos'); return; }
+  if (!validarCedula(doc, 'vis-alert')) return;
+  if (!validarNombre(nom, 'El nombre', 'vis-alert')) return;
+  if (!validarNombre(ape, 'El apellido', 'vis-alert')) return;
+  if (!validarPassword(pass, 'vis-alert')) return;
+
+  usuario = { nombre: nom+' '+ape, tipo: 'visitante' };
+  token = 'visitante_'+doc;
+  localStorage.setItem('pq_token', token);
+  localStorage.setItem('pq_usuario', JSON.stringify(usuario));
+  go('s-inicio'); actualizarInicio();
+}
+
+// ─── REGISTRO SANTIAGUINO ──────────────────────
+function doRegistroSantiaguino() {
+  const doc  = document.getElementById('san-doc').value.trim();
+  const nom  = document.getElementById('san-nombre').value.trim();
+  const ape  = document.getElementById('san-apell').value.trim();
+  const p1   = document.getElementById('san-pass1').value;
+  const p2   = document.getElementById('san-pass2').value;
+  const tel  = document.getElementById('san-tel').value.trim();
+  const perf = document.getElementById('san-perfil').value;
+
+  if (!doc || !nom || !ape || !p1 || !p2 || !tel || !perf) { showAlert('san-alert', 'Completa todos los campos'); return; }
+  if (!validarCedula(doc, 'san-alert')) return;
+  if (!validarNombre(nom, 'El nombre', 'san-alert')) return;
+  if (!validarNombre(ape, 'El apellido', 'san-alert')) return;
+  if (!validarCelular(tel, 'san-alert')) return;
+  if (!validarPassword(p1, 'san-alert')) return;
+  if (p1 !== p2) { showAlert('san-alert', 'Las contraseñas no coinciden'); return; }
+  go('s-otp');
+}
+
+// ─── VERIFICAR OTP ───────────────────────────────
+function doVerificarOTP() {
+  const codigo = ['otp1','otp2','otp3','otp4'].map(id=>document.getElementById(id).value).join('');
+  if (codigo.length < 4) { alert('Ingresa el código completo'); return; }
+  // Demo: cualquier código de 4 dígitos funciona
+  usuario = { nombre: document.getElementById('san-nombre').value+' '+document.getElementById('san-apell').value, tipo: document.getElementById('san-perfil').value };
+  token = 'token_'+Date.now();
+  localStorage.setItem('pq_token', token);
+  localStorage.setItem('pq_usuario', JSON.stringify(usuario));
+  go('s-menu');
+}
+
+// ─── RESERVA ─────────────────────────────────────
+function doReserva(tipo, screen) {
+  const alertId = {
+    's-reserva-carro': 'rc-alert',
+    's-reserva-moto':  'rm-alert',
+    's-reserva-bici':  'rb-alert',
+    's-reserva-pat':   'rp-alert'
+  }[screen];
+
+  let placa='', fecha='';
+  if (screen==='s-reserva-carro') { placa=document.getElementById('rc-placa').value.trim(); fecha=document.getElementById('rc-fecha').value; }
+  if (screen==='s-reserva-moto')  { placa=document.getElementById('rm-placa').value.trim(); fecha=document.getElementById('rm-fecha').value; }
+  if (screen==='s-reserva-bici')  { placa='Bici'; fecha=document.getElementById('rb-fecha').value; }
+  if (screen==='s-reserva-pat')   { placa=document.getElementById('rp-placa').value.trim()||'S/P'; fecha=document.getElementById('rp-fecha').value; }
+
+  if (!fecha) { showAlert(alertId,'Selecciona fecha y hora de reserva'); return; }
+
+  const nuevaReserva = {
+    id: Date.now(),
+    tipo,
+    placa: placa || 'N/A',
+    fecha: fecha,
+    estado: 'Activa',
+    timestamp: new Date().toLocaleString('es-CO')
+  };
+  reservas.unshift(nuevaReserva);
+  localStorage.setItem('pq_reservas', JSON.stringify(reservas));
+  renderHistorial();
+  go('s-reserva-ok');
+}
+
+// ─── HISTORIAL ───────────────────────────────────
+function renderHistorial() {
+  const lista = document.getElementById('historial-lista');
+  if (!reservas.length) {
+    lista.innerHTML = '<div class="historial-empty">No hay reservas registradas aún.</div>';
+    return;
+  }
+  lista.innerHTML = reservas.map(r => `
+    <div class="historial-item">
+      <strong>${r.tipo}</strong> — Placa: ${r.placa}
+      <span class="estado ${r.estado==='Cancelada'?'salida':''}">${r.estado}</span><br>
+      📅 ${new Date(r.fecha).toLocaleString('es-CO', {dateStyle:'short', timeStyle:'short'})}<br>
+      <span style="opacity:0.6;font-size:11px;">Registrada: ${r.timestamp}</span>
+    </div>
+  `).join('');
+}
+
+// ─── CERRAR SESIÓN ───────────────────────────────
+function cerrarSesion() {
+  token = null; usuario = null;
+  localStorage.removeItem('pq_token');
+  localStorage.removeItem('pq_usuario');
+  go('s-inicio');
+}
+
+// ─── RECUPERAR CONTRASEÑA ─────────────────────
+function doRecuperar() {
+  const doc = document.getElementById('rec-doc').value.trim();
+  const cel = document.getElementById('rec-cel').value.trim();
+
+  if (!doc || !cel) { showAlert('rec-alert', 'Completa todos los campos'); return; }
+  if (!validarCedula(doc, 'rec-alert')) return;
+  if (!validarCelular(cel, 'rec-alert')) return;
+
+  // Ocultar alert de error y mostrar éxito
+  document.getElementById('rec-alert').classList.remove('show');
+  const ok = document.getElementById('rec-ok');
+  ok.textContent = '¡Te enviaremos tu contraseña temporal al celular ' + cel + '!';
+  ok.classList.add('show');
+
+  // Limpiar campos
+  document.getElementById('rec-doc').value = '';
+  document.getElementById('rec-cel').value = '';
+
+  // Volver al login después de 2.5s
+  setTimeout(() => {
+    ok.classList.remove('show');
+    go('s-login');
+  }, 2500);
+}
+
+// ─── INIT ────────────────────────────────────────
+renderHistorial();
+
+function actualizarInicio() {
+  var saludo    = document.getElementById('inicio-saludo');
+  var sinSesion = document.getElementById('inicio-sin-sesion');
+  var conSesion = document.getElementById('inicio-con-sesion');
+  if (token && usuario) {
+    saludo.textContent = 'Bienvenido, ' + (usuario.nombre || 'usuario') + ' :)';
+    saludo.style.display = 'block';
+    sinSesion.style.display = 'none';
+    conSesion.style.display = 'flex';
+  } else {
+    saludo.style.display = 'none';
+    sinSesion.style.display = 'flex';
+    conSesion.style.display = 'none';
+  }
+}
+
+actualizarInicio();
+
+// Enter en login
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key==='Enter') doLogin();
+});
+document.getElementById('login-doc').addEventListener('keydown', e => {
+  if (e.key==='Enter') document.getElementById('login-pass').focus();
+});
+</script>
+</body>
+</html>
