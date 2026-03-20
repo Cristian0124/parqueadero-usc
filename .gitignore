@@ -1,20 +1,28 @@
 # Dependencias
 node_modules/
 
-# Variables de entorno (NUNCA subir a GitHub)
+# Variables de entorno (¡nunca subir al repo!)
 .env
+.env.local
+.env.production
 
 # Logs
 *.log
 npm-debug.log*
+logs/
 
 # Sistema operativo
 .DS_Store
 Thumbs.db
 
-# IDEs
+# Editores
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Railway (generado automáticamente)
-.railway/
+# Build / temporales
+dist/
+build/
+tmp/
+
