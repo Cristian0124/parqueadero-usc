@@ -17,6 +17,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/vehiculos", vehiculoRoutes);
 app.use("/api/parqueos", parqueoRoutes);
 
+// Servir frontend
+app.use(express.static(__dirname));
+
 // Ruta de prueba
 app.get("/", (req, res) => {
   res.json({ message: "🚗 API Parqueadero USC funcionando" });
