@@ -930,7 +930,7 @@ function cerrarSesion() {
   token = null; usuario = null;
   localStorage.removeItem('pq_token');
   localStorage.removeItem('pq_usuario');
-  go('s-inicio');
+  go('s-inicio'); actualizarInicio();
 }
 
 // ─── RECUPERAR CONTRASEÑA ─────────────────────
