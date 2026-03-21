@@ -780,7 +780,7 @@ async function doRegistro() {
   try {
     const res = await fetch(API+'/auth/register', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre: nom+' '+ape, email: doc+'@usc.edu.co', password: p1, telefono: cel })
+      body: JSON.stringify({ nombre: nom+' '+ape, cedula: doc, password: p1, telefono: cel })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Error al registrar');
@@ -807,7 +807,7 @@ async function doLogin() {
   try {
     const res = await fetch(API+'/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: doc+'@usc.edu.co', password: pass })
+      body: JSON.stringify({ cedula: doc, password: pass })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Credenciales incorrectas');
