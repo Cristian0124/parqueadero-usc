@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Parqueadero USC</title>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -358,6 +360,145 @@ body {
   font-size: 12px; font-weight: 700; color: rgba(0,0,0,0.4);
   letter-spacing: 1px; margin-bottom: 6px; width: 100%;
 }
+
+/* ── QR RESERVA ── */
+.qr-reserva-wrap {
+  background: #fff;
+  border-radius: 20px;
+  border: 3px solid #0a0a0a;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 92%;
+  margin: 12px 0;
+}
+.qr-reserva-wrap canvas,
+.qr-reserva-wrap img {
+  border-radius: 8px;
+}
+.qr-reserva-info {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 15px;
+  color: #0a0a0a;
+  text-align: center;
+  line-height: 1.5;
+}
+.qr-badge {
+  background: #1a0a8f;
+  color: #fff;
+  border-radius: 50px;
+  padding: 6px 18px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.qr-instruccion {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(0,0,0,0.5);
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* ── QR SCANNER ── */
+#qr-scanner-region {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid #0a0a0a;
+  background: #0a0a0a;
+  min-height: 260px;
+  position: relative;
+}
+#qr-scanner-region video {
+  border-radius: 13px;
+}
+#html5-qrcode-button-camera-permission,
+#html5-qrcode-button-camera-start,
+#html5-qrcode-button-camera-stop {
+  font-family: 'Black Han Sans', sans-serif !important;
+  font-size: 16px !important;
+  background: #1a0a8f !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 50px !important;
+  padding: 10px 24px !important;
+  cursor: pointer !important;
+  margin: 8px auto !important;
+  display: block !important;
+}
+.qr-scan-status {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 16px;
+  text-align: center;
+  margin: 10px 0;
+  min-height: 24px;
+  color: #0a0a0a;
+}
+.qr-scan-status.ok  { color: #14532d; }
+.qr-scan-status.err { color: #7f0000; }
+.qr-scan-corner {
+  position: absolute;
+  width: 36px; height: 36px;
+  border-color: #3BB8F5;
+  border-style: solid;
+  pointer-events: none;
+  z-index: 10;
+}
+.qr-scan-corner.tl { top: 12px; left: 12px; border-width: 4px 0 0 4px; border-radius: 4px 0 0 0; }
+.qr-scan-corner.tr { top: 12px; right: 12px; border-width: 4px 4px 0 0; border-radius: 0 4px 0 0; }
+.qr-scan-corner.bl { bottom: 12px; left: 12px; border-width: 0 0 4px 4px; border-radius: 0 0 0 4px; }
+.qr-scan-corner.br { bottom: 12px; right: 12px; border-width: 0 4px 4px 0; border-radius: 0 0 4px 0; }
+
+/* ── BOTÓN SALIDA RÁPIDA ── */
+.btn-salida {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #0a0a0a;
+  color: #3BB8F5;
+  border: 2.5px solid #0a0a0a;
+  border-radius: 50px;
+  padding: 15px 40px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 20px;
+  cursor: pointer;
+  width: 100%;
+  margin: 8px 0;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.5px;
+}
+.btn-salida:hover { background: #222; transform: scale(1.02); }
+.btn-salida.disabled { opacity: 0.35; pointer-events: none; }
+
+/* ── QR SALIDA SCREEN ── */
+.qr-salida-badge {
+  background: #0a0a0a;
+  color: #3BB8F5;
+  border-radius: 50px;
+  padding: 6px 20px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  margin-bottom: 4px;
+}
+.reserva-activa-card {
+  width: 92%;
+  background: #1a0a8f;
+  border-radius: 14px;
+  padding: 18px 20px;
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.7;
+  margin-bottom: 12px;
+  border-left: 5px solid #3BB8F5;
+}
 </style>
 </head>
 <body>
@@ -431,16 +572,22 @@ body {
      SCREEN 3 — LOGIN QR
 ══════════════════════════════ -->
 <div id="s-qr" class="screen">
-  <div class="section-title center">ESCANEA QR DE LA APP<br>IDENTIFÍCATE USC</div>
-  <div class="qr-block">
-    <div class="qr-icon">📷</div>
-    <span>Cámara de escaneo QR</span>
-    <span style="font-size:11px; opacity:0.5;">(requiere cámara del dispositivo)</span>
+  <div class="section-title center">INICIAR SESIÓN<br>CON QR</div>
+  <p style="font-size:13px;font-weight:800;color:#0a0a0a;text-align:center;letter-spacing:0.5px;margin-bottom:16px;">
+    ESCANEA EL QR QUE TE GENERÓ EL PARQUEADERO AL RESERVAR
+  </p>
+  <div style="width:92%;position:relative;">
+    <div id="qr-scanner-region"></div>
+    <div class="qr-scan-corner tl"></div>
+    <div class="qr-scan-corner tr"></div>
+    <div class="qr-scan-corner bl"></div>
+    <div class="qr-scan-corner br"></div>
   </div>
+  <div class="qr-scan-status" id="qr-scan-status">Apunta la cámara al código QR</div>
   <div class="gap"></div>
-  <button class="btn-link small" onclick="go('s-login')" style="font-size:16px; color:#4a3cbf;">¿no tienes tu QR a la mano? dale click aquí</button>
+  <button class="btn-link small" onclick="stopQRScanner(); go('s-login')" style="font-size:16px; color:#4a3cbf;">¿No tienes QR? inicia sesión manual</button>
   <div class="spacer"></div>
-  <button class="btn-link" onclick="go('s-inicio')">ATRÁS</button>
+  <button class="btn-link" onclick="stopQRScanner(); go('s-inicio')">ATRÁS</button>
 </div>
 
 <!-- ══════════════════════════════
@@ -523,7 +670,11 @@ body {
     <div class="vehicle-dot"></div> PATINETA
   </button>
   <div class="gap"></div>
-  <button class="btn-bubble" onclick="go('s-reserva-ok')">HISTORIAL</button>
+  <button id="btn-qr-salida" class="btn-salida disabled" onclick="irAQRSalida()">
+    &#9654; QR PARA SALIR
+  </button>
+  <div class="gap-sm"></div>
+  <button class="btn-bubble" onclick="go('s-historial')">HISTORIAL</button>
   <div class="spacer"></div>
   <button class="btn-link" onclick="cerrarSesion()">CERRAR SESIÓN</button>
 </div>
@@ -623,17 +774,20 @@ body {
 </div>
 
 <!-- ══════════════════════════════
-     SCREEN 13 — RESERVA EXITOSA
+     SCREEN 13 — RESERVA EXITOSA + QR
 ══════════════════════════════ -->
 <div id="s-reserva-ok" class="screen">
-  <div class="section-title center">HISTORIAL</div>
-  <div class="info-box">
-    PARA VISUALIZAR EL ESTADO DE TU RESERVA REVISAR EL HISTORIAL
+  <div class="section-title center">¡RESERVA<br>CONFIRMADA!</div>
+  <div class="qr-reserva-wrap">
+    <div class="qr-badge" id="qr-badge-tipo">CARRO</div>
+    <div id="qr-canvas-container"></div>
+    <div class="qr-reserva-info" id="qr-info-texto"></div>
+    <div class="qr-instruccion">Muestra este QR al llegar al parqueadero USC para registrar tu entrada</div>
   </div>
   <div class="gap"></div>
-  <button class="btn-link dark" onclick="go('s-historial')">HISTORIAL</button>
+  <button class="btn-link dark" onclick="go('s-historial')">VER HISTORIAL</button>
   <div class="spacer"></div>
-  <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
+  <button class="btn-link" onclick="go('s-menu')">MENÚ PRINCIPAL</button>
 </div>
 
 <!-- ══════════════════════════════
@@ -652,9 +806,30 @@ body {
 </div>
 
 <!-- ══════════════════════════════
+     SCREEN 15 — QR DE SALIDA
+══════════════════════════════ -->
+<div id="s-qr-salida" class="screen">
+  <div class="section-title center">QR DE<br>SALIDA</div>
+  <div id="salida-reserva-info" class="reserva-activa-card"></div>
+  <div class="qr-reserva-wrap">
+    <div class="qr-salida-badge">SALIDA USC</div>
+    <div id="qr-salida-container"></div>
+    <div class="qr-instruccion">Muestra este QR al guardia de salida.<br>El espacio quedará libre automáticamente.</div>
+  </div>
+  <div class="gap"></div>
+  <button class="btn-bubble full" style="background:#c0392b;color:#fff;border-color:#c0392b;" onclick="finalizarReserva()">
+    CONFIRMAR SALIDA MANUAL
+  </button>
+  <p style="font-size:11px;font-weight:700;color:rgba(0,0,0,0.4);text-align:center;margin-top:6px;">
+    Úsalo solo si el parqueadero no puede escanear el QR
+  </p>
+  <div class="spacer"></div>
+  <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
+</div>
+
+<!-- ══════════════════════════════
      SCREEN — RECUPERAR CONTRASEÑA
 ══════════════════════════════ -->
-<div id="s-recuperar" class="screen">
   <div class="big-title">PARQUEADERO<br>USC</div>
   <div class="sub-title">Recupera tu acceso</div>
   <div class="gap"></div>
@@ -685,10 +860,26 @@ function go(id) {
   }
 
   const prev = document.querySelector('.screen.active');
-  if (prev) { prevScreen = prev.id; prev.classList.remove('active'); }
+  if (prev) {
+    // Detener scanner si salimos de la pantalla QR
+    if (prev.id === 's-qr') stopQRScanner();
+    prevScreen = prev.id;
+    prev.classList.remove('active');
+  }
+
   const next = document.getElementById(id);
   if (next) next.classList.add('active');
-  window.scrollTo(0,0);
+  window.scrollTo(0, 0);
+
+  // Arrancar scanner al entrar a la pantalla QR
+  if (id === 's-qr') {
+    setTimeout(startQRScanner, 300);
+  }
+
+  // Actualizar botón de salida al entrar al menú
+  if (id === 's-menu') {
+    setTimeout(actualizarBotonSalida, 50);
+  }
 }
 
 // ─── ALERTAS ────────────────────────────────────
@@ -845,11 +1036,15 @@ function doReserva(tipo, screen) {
     return;
   }
 
+  // Generar token único para el QR
+  const qrToken = 'PQ-' + Date.now() + '-' + Math.random().toString(36).substr(2,6).toUpperCase();
+
   const nueva = {
     tipo,
     placa,
     fecha,
-    estado: 'Activa'
+    estado: 'Activa',
+    qrToken
   };
 
   reservas.push(nueva);
@@ -858,7 +1053,46 @@ function doReserva(tipo, screen) {
   localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
 
   renderHistorial();
+  mostrarQRReserva(nueva);
   go('s-reserva-ok');
+}
+
+// ─── MOSTRAR QR DE RESERVA ──────────────────────
+function mostrarQRReserva(reserva) {
+  // Actualizar badge de tipo
+  document.getElementById('qr-badge-tipo').textContent = reserva.tipo.toUpperCase();
+
+  // Info de la reserva
+  const fechaFormateada = reserva.fecha
+    ? new Date(reserva.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
+    : '';
+  document.getElementById('qr-info-texto').innerHTML =
+    (reserva.placa && reserva.placa !== 'Bici' && reserva.placa !== 'S/P'
+      ? '<strong>Placa:</strong> ' + reserva.placa + '<br>' : '') +
+    '<strong>Fecha:</strong> ' + fechaFormateada + '<br>' +
+    '<small style="opacity:0.5;font-size:11px;">' + reserva.qrToken + '</small>';
+
+  // Limpiar QR anterior y generar nuevo
+  const container = document.getElementById('qr-canvas-container');
+  container.innerHTML = '';
+
+  // Datos del QR: JSON con info de la reserva
+  const qrData = JSON.stringify({
+    token: reserva.qrToken,
+    tipo: reserva.tipo,
+    placa: reserva.placa,
+    fecha: reserva.fecha,
+    usuario: usuario ? usuario.cedula : 'visitante'
+  });
+
+  new QRCode(container, {
+    text: qrData,
+    width: 200,
+    height: 200,
+    colorDark: '#0a0a0a',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
 }
 
 // ─── HISTORIAL ──────────────────────────────────
@@ -867,17 +1101,178 @@ function renderHistorial() {
   if (!lista) return;
 
   if (!reservas.length) {
-    lista.innerHTML = '<div>No hay reservas</div>';
+    lista.innerHTML = '<div class="historial-empty">No hay reservas registradas aún.</div>';
     return;
   }
 
-  lista.innerHTML = reservas.map(r => `
-    <div>
-      ${r.tipo} - ${r.placa} <br>
-      ${r.fecha} <br>
-      Estado: ${r.estado}
+  lista.innerHTML = reservas.map((r, i) => `
+    <div class="historial-item">
+      <strong>${r.tipo}</strong>${r.placa && r.placa !== 'Bici' && r.placa !== 'S/P' ? ' — ' + r.placa : ''}
+      <span class="estado ${r.estado === 'Activa' ? '' : 'salida'}">${r.estado}</span><br>
+      📅 ${r.fecha ? new Date(r.fecha).toLocaleString('es-CO', {dateStyle:'medium',timeStyle:'short'}) : ''}<br>
+      <span style="opacity:0.5;font-size:11px;">${r.qrToken || ''}</span>
     </div>
   `).join('');
+}
+
+// ─── BOTÓN SALIDA — activar/desactivar según reserva activa ─
+function actualizarBotonSalida() {
+  const btn = document.getElementById('btn-qr-salida');
+  if (!btn) return;
+  const activa = reservas.find(r => r.estado === 'Activa');
+  if (activa) {
+    btn.classList.remove('disabled');
+    btn.innerHTML = '&#9654; QR PARA SALIR — ' + activa.tipo.toUpperCase();
+  } else {
+    btn.classList.add('disabled');
+    btn.innerHTML = '&#9654; QR PARA SALIR';
+  }
+}
+
+function irAQRSalida() {
+  const activa = reservas.find(r => r.estado === 'Activa');
+  if (!activa) return;
+
+  // Info card
+  const fechaF = activa.fecha
+    ? new Date(activa.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
+    : '';
+  document.getElementById('salida-reserva-info').innerHTML =
+    '🚗 <strong>' + activa.tipo + '</strong>' +
+    (activa.placa && activa.placa !== 'Bici' && activa.placa !== 'S/P' ? ' — ' + activa.placa : '') +
+    '<br>📅 ' + fechaF;
+
+  // Generar QR de salida con token de salida único
+  const qrSalidaToken = 'SALIDA-' + activa.qrToken;
+  const container = document.getElementById('qr-salida-container');
+  container.innerHTML = '';
+
+  const qrData = JSON.stringify({
+    accion: 'salida',
+    token: activa.qrToken,
+    tokenSalida: qrSalidaToken,
+    tipo: activa.tipo,
+    placa: activa.placa,
+    usuario: usuario ? usuario.cedula : 'visitante'
+  });
+
+  new QRCode(container, {
+    text: qrData,
+    width: 200,
+    height: 200,
+    colorDark: '#0a0a0a',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  go('s-qr-salida');
+}
+
+// ─── FINALIZAR RESERVA (salida manual) ──────────
+function finalizarReserva() {
+  const idx = reservas.findIndex(r => r.estado === 'Activa');
+  if (idx === -1) return;
+
+  reservas[idx].estado = 'Completada';
+  reservas[idx].horaSalida = new Date().toISOString();
+
+  localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
+  renderHistorial();
+  actualizarBotonSalida();
+
+  // Feedback y volver al menú
+  const container = document.getElementById('qr-salida-container');
+  container.innerHTML = '<div style="font-family:\'Black Han Sans\',sans-serif;font-size:18px;color:#14532d;text-align:center;padding:20px;">✓ RESERVA FINALIZADA<br><span style=\'font-size:13px;opacity:0.7;\'>El espacio está disponible</span></div>';
+
+  setTimeout(() => go('s-menu'), 2000);
+}
+
+// ─── QR SCANNER (LOGIN) ─────────────────────────
+let html5QrScanner = null;
+
+function startQRScanner() {
+  const statusEl = document.getElementById('qr-scan-status');
+  statusEl.textContent = 'Iniciando cámara...';
+  statusEl.className = 'qr-scan-status';
+
+  html5QrScanner = new Html5Qrcode('qr-scanner-region');
+
+  html5QrScanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 220, height: 220 } },
+    (decodedText) => {
+      onQRScanned(decodedText);
+    },
+    () => {}
+  ).catch(() => {
+    statusEl.textContent = 'No se pudo acceder a la cámara. Verifica los permisos.';
+    statusEl.className = 'qr-scan-status err';
+  });
+}
+
+function stopQRScanner() {
+  if (html5QrScanner) {
+    html5QrScanner.stop().catch(() => {});
+    html5QrScanner = null;
+  }
+}
+
+function onQRScanned(texto) {
+  const statusEl = document.getElementById('qr-scan-status');
+  stopQRScanner();
+
+  let datos = null;
+  try { datos = JSON.parse(texto); } catch (e) {
+    statusEl.textContent = 'QR inválido. Usa el QR generado al reservar.';
+    statusEl.className = 'qr-scan-status err';
+    setTimeout(startQRScanner, 2000);
+    return;
+  }
+
+  // Buscar reserva en localStorage por token
+  const cedula = datos.usuario;
+  if (!cedula) {
+    statusEl.textContent = 'QR sin usuario. Inicia sesión manual.';
+    statusEl.className = 'qr-scan-status err';
+    return;
+  }
+
+  const reservasGuardadas = JSON.parse(localStorage.getItem('pq_reservas_' + cedula) || '[]');
+  const reservaEncontrada = reservasGuardadas.find(r => r.qrToken === datos.token);
+
+  if (!reservaEncontrada) {
+    statusEl.textContent = 'QR no reconocido o reserva no existe.';
+    statusEl.className = 'qr-scan-status err';
+    setTimeout(startQRScanner, 2500);
+    return;
+  }
+
+  // Buscar datos del usuario en localStorage
+  const usuarioGuardado = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
+  const tokenGuardado = localStorage.getItem('pq_token');
+
+  if (usuarioGuardado && tokenGuardado && String(usuarioGuardado.cedula) === String(cedula)) {
+    // El usuario ya tenía sesión guardada → restaurar
+    token = tokenGuardado;
+    usuario = usuarioGuardado;
+    reservas = reservasGuardadas;
+
+    statusEl.textContent = '✓ Bienvenido, ' + (usuario.nombre || 'usuario');
+    statusEl.className = 'qr-scan-status ok';
+
+    setTimeout(() => {
+      go('s-menu');
+      actualizarInicio();
+    }, 1000);
+  } else {
+    // No hay sesión guardada para esa cédula → pedir login manual
+    statusEl.textContent = 'QR válido. Por seguridad, confirma tu contraseña.';
+    statusEl.className = 'qr-scan-status ok';
+    setTimeout(() => {
+      document.getElementById('login-doc').value = cedula;
+      go('s-login');
+    }, 1200);
+  }
 }
 
 // ─── INIT ───────────────────────────────────────
