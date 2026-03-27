@@ -673,16 +673,15 @@ body {
 </div><!-- /phone-wrap -->
 
 <script>
-//confiuracion
+// ─── CONFIG ─────────────────────────────────────
 const API = 'https://parqueadero-usc-production.up.railway.app/api';
 let token = localStorage.getItem('pq_token') || null;
 let usuario = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
 let prevScreen = 's-menu';
 let reservas = JSON.parse(localStorage.getItem('pq_reservas') || '[]');
 
-// navegacion
+// ─── NAV ────────────────────────────────────────
 function go(id) {
-  // 🔐 proteger menú
   if (id === 's-menu' && !token) {
     showAlert('login-alert', 'Debes iniciar sesión');
     return;
@@ -695,7 +694,7 @@ function go(id) {
   window.scrollTo(0,0);
 }
 
-// error
+// ─── ALERTAS ────────────────────────────────────
 function showAlert(id, msg, type='err') {
   const el = document.getElementById(id);
   if (!el) return;
@@ -704,7 +703,7 @@ function showAlert(id, msg, type='err') {
   setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// login
+// ─── LOGIN ──────────────────────────────────────
 async function doLogin() {
   const doc  = document.getElementById('login-doc').value.trim();
   const pass = document.getElementById('login-pass').value;
@@ -723,9 +722,7 @@ async function doLogin() {
 
     const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.message || 'Error en login');
-    }
+    if (!res.ok) throw new Error(data.message);
 
     token = data.token;
     usuario = data.usuario;
@@ -741,7 +738,7 @@ async function doLogin() {
   }
 }
 
-// registro
+// ─── REGISTRO ───────────────────────────────────
 async function doRegistro() {
   const doc = document.getElementById('reg-doc').value.trim();
   const nom = document.getElementById('reg-nombre').value.trim();
@@ -774,9 +771,7 @@ async function doRegistro() {
 
     const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.message || 'Error al registrar');
-    }
+    if (!res.ok) throw new Error(data.message);
 
     showAlert('reg-alert', '¡Cuenta creada! Inicia sesión', 'ok');
     setTimeout(() => go('s-login'), 1500);
@@ -786,7 +781,7 @@ async function doRegistro() {
   }
 }
 
-// cerrar sesion
+// ─── CERRAR SESIÓN ──────────────────────────────
 function cerrarSesion() {
   token = null;
   usuario = null;
@@ -796,7 +791,7 @@ function cerrarSesion() {
   actualizarInicio();
 }
 
-// inicio
+// ─── INICIO UI ──────────────────────────────────
 function actualizarInicio() {
   var saludo    = document.getElementById('inicio-saludo');
   var sinSesion = document.getElementById('inicio-sin-sesion');
@@ -814,10 +809,74 @@ function actualizarInicio() {
   }
 }
 
+// ─── RESERVAS ───────────────────────────────────
+function doReserva(tipo, screen) {
+  let placa = '';
+  let fecha = '';
 
+  if (screen === 's-reserva-carro') {
+    placa = document.getElementById('rc-placa').value;
+    fecha = document.getElementById('rc-fecha').value;
+  }
+
+  if (screen === 's-reserva-moto') {
+    placa = document.getElementById('rm-placa').value;
+    fecha = document.getElementById('rm-fecha').value;
+  }
+
+  if (screen === 's-reserva-bici') {
+    placa = 'Bici';
+    fecha = document.getElementById('rb-fecha').value;
+  }
+
+  if (screen === 's-reserva-pat') {
+    placa = document.getElementById('rp-placa').value || 'S/P';
+    fecha = document.getElementById('rp-fecha').value;
+  }
+
+  if (!fecha) {
+    alert('Selecciona fecha');
+    return;
+  }
+
+  const nueva = {
+    tipo,
+    placa,
+    fecha,
+    estado: 'Activa'
+  };
+
+  reservas.push(nueva);
+  localStorage.setItem('pq_reservas', JSON.stringify(reservas));
+
+  renderHistorial();
+  go('s-reserva-ok');
+}
+
+// ─── HISTORIAL ──────────────────────────────────
+function renderHistorial() {
+  const lista = document.getElementById('historial-lista');
+  if (!lista) return;
+
+  if (!reservas.length) {
+    lista.innerHTML = '<div>No hay reservas</div>';
+    return;
+  }
+
+  lista.innerHTML = reservas.map(r => `
+    <div>
+      ${r.tipo} - ${r.placa} <br>
+      ${r.fecha} <br>
+      Estado: ${r.estado}
+    </div>
+  `).join('');
+}
+
+// ─── INIT ───────────────────────────────────────
 actualizarInicio();
+renderHistorial();
 
-// login
+// ENTER LOGIN
 document.getElementById('login-pass').addEventListener('keydown', e => {
   if (e.key==='Enter') doLogin();
 });
