@@ -678,7 +678,7 @@ const API = 'https://parqueadero-usc-production.up.railway.app/api';
 let token = localStorage.getItem('pq_token') || null;
 let usuario = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
 let prevScreen = 's-menu';
-let reservas = JSON.parse(localStorage.getItem('pq_reservas') || '[]');
+let reservas = JSON.parse(localStorage.getItem('pq_reservas_' + (usuario?.cedula || 'temp')) || '[]');
 
 // ─── NAV ────────────────────────────────────────
 function go(id) {
@@ -729,7 +729,7 @@ async function doLogin() {
 
     localStorage.setItem('pq_token', token);
     localStorage.setItem('pq_usuario', JSON.stringify(usuario));
-
+    reservas = JSON.parse(localStorage.getItem('pq_reservas_' + usuario.cedula) || '[]');
     go('s-inicio');
     actualizarInicio();
 
@@ -847,7 +847,7 @@ function doReserva(tipo, screen) {
   };
 
   reservas.push(nueva);
-  localStorage.setItem('pq_reservas', JSON.stringify(reservas));
+ localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
 
   renderHistorial();
   go('s-reserva-ok');
