@@ -678,7 +678,7 @@ const API = 'https://parqueadero-usc-production.up.railway.app/api';
 let token = localStorage.getItem('pq_token') || null;
 let usuario = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
 let prevScreen = 's-menu';
-let reservas = JSON.parse(localStorage.getItem('pq_reservas_' + (usuario?.cedula || 'temp')) || '[]');
+let reservas = [];
 
 // ─── NAV ────────────────────────────────────────
 function go(id) {
