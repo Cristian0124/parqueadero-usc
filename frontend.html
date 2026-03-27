@@ -638,7 +638,7 @@ body {
 
 <!-- ══════════════════════════════
      SCREEN 14 — HISTORIAL
-══════════════════════════════ -->
+══════════════════════════════ --> 
 <div id="s-historial" class="screen">
   <div class="section-title center">HISTORIAL</div>
   <div class="historial-box">
@@ -673,15 +673,21 @@ body {
 </div><!-- /phone-wrap -->
 
 <script>
-// ─── STATE ───────────────────────────────────────
+//confiuracion
 const API = 'https://parqueadero-usc-production.up.railway.app/api';
 let token = localStorage.getItem('pq_token') || null;
 let usuario = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
 let prevScreen = 's-menu';
 let reservas = JSON.parse(localStorage.getItem('pq_reservas') || '[]');
 
-// ─── NAVIGATE ────────────────────────────────────
+// navegacion
 function go(id) {
+  // 🔐 proteger menú
+  if (id === 's-menu' && !token) {
+    showAlert('login-alert', 'Debes iniciar sesión');
+    return;
+  }
+
   const prev = document.querySelector('.screen.active');
   if (prev) { prevScreen = prev.id; prev.classList.remove('active'); }
   const next = document.getElementById(id);
@@ -689,15 +695,7 @@ function go(id) {
   window.scrollTo(0,0);
 }
 
-// ─── OTP FOCUS JUMP ──────────────────────────────
-function otpNext(el, idx) {
-  el.value = el.value.replace(/\D/g,'');
-  if (el.value && idx < 4) {
-    document.getElementById('otp'+(idx+1)).focus();
-  }
-}
-
-// ─── ALERT HELPERS ───────────────────────────────
+// error
 function showAlert(id, msg, type='err') {
   const el = document.getElementById(id);
   if (!el) return;
@@ -706,61 +704,44 @@ function showAlert(id, msg, type='err') {
   setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// ─── REGISTRO NUEVO USUARIO ──────────────────────
-// ─── VALIDADORES CENTRALES ────────────────────────
-function validarCedula(val, alertId) {
-  if (!/^[0-9]+$/.test(val)) {
-    showAlert(alertId, 'La cédula solo puede contener números'); return false;
+// login
+async function doLogin() {
+  const doc  = document.getElementById('login-doc').value.trim();
+  const pass = document.getElementById('login-pass').value;
+
+  if (!doc || !pass) {
+    showAlert('login-alert', 'Completa todos los campos');
+    return;
   }
-  if (val.length < 7 || val.length > 12) {
-    showAlert(alertId, 'La cédula debe tener entre 7 y 12 dígitos'); return false;
+
+  try {
+    const res = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cedula: doc, password: pass })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Error en login');
+    }
+
+    token = data.token;
+    usuario = data.usuario;
+
+    localStorage.setItem('pq_token', token);
+    localStorage.setItem('pq_usuario', JSON.stringify(usuario));
+
+    go('s-inicio');
+    actualizarInicio();
+
+  } catch (e) {
+    showAlert('login-alert', e.message);
   }
-  return true;
-}
-function validarNombre(val, campo, alertId) {
-  if (!/^[a-zA-ZÀ-ɏ]+$/.test(val)) {
-    showAlert(alertId, campo + ' solo puede contener letras, sin espacios ni números'); return false;
-  }
-  return true;
-}
-function validarCelular(val, alertId) {
-  if (!/^[0-9]+$/.test(val)) {
-    showAlert(alertId, 'El celular solo puede contener números'); return false;
-  }
-  if (val.length !== 10) {
-    showAlert(alertId, 'El celular debe tener exactamente 10 dígitos'); return false;
-  }
-  return true;
-}
-function validarPassword(val, alertId) {
-  if (val.length < 4 || val.length > 8) {
-    showAlert(alertId, 'La contraseña debe tener entre 4 y 8 caracteres'); return false;
-  }
-  return true;
 }
 
-// Bloqueo en tiempo real de caracteres no permitidos
-function soloNumeros(e) {
-  const permitidas = ['Backspace','Tab','ArrowLeft','ArrowRight','Delete','Enter'];
-  if (!/[0-9]/.test(e.key) && !permitidas.includes(e.key)) e.preventDefault();
-}
-function soloLetras(e) {
-  const permitidas = ['Backspace','Tab','ArrowLeft','ArrowRight','Delete','Enter'];
-  if (!/[a-zA-ZÀ-ɏ]/.test(e.key) && !permitidas.includes(e.key)) e.preventDefault();
-}
-document.addEventListener('DOMContentLoaded', function() {
-  ['login-doc','reg-doc','vis-doc','san-doc','rec-doc'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.addEventListener('keydown', soloNumeros);
-  });
-  ['reg-nombre','reg-apell','vis-nombre','vis-apellido','san-nombre','san-apell'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.addEventListener('keydown', soloLetras);
-  });
-  ['reg-cel','san-tel','rec-cel'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.addEventListener('keydown', soloNumeros);
-  });
-});
-
-// ─── REGISTRO NUEVO USUARIO ────────────────────────
+// registro
 async function doRegistro() {
   const doc = document.getElementById('reg-doc').value.trim();
   const nom = document.getElementById('reg-nombre').value.trim();
@@ -769,205 +750,60 @@ async function doRegistro() {
   const p1  = document.getElementById('reg-pass1').value;
   const p2  = document.getElementById('reg-pass2').value;
 
-  if (!doc || !nom || !ape || !cel || !p1 || !p2) { showAlert('reg-alert', 'Completa todos los campos'); return; }
-  if (!validarCedula(doc, 'reg-alert')) return;
-  if (!validarNombre(nom, 'El nombre', 'reg-alert')) return;
-  if (!validarNombre(ape, 'El apellido', 'reg-alert')) return;
-  if (!validarCelular(cel, 'reg-alert')) return;
-  if (!validarPassword(p1, 'reg-alert')) return;
-  if (p1 !== p2) { showAlert('reg-alert', 'Las contraseñas no coinciden'); return; }
-
-  try {
-    const res = await fetch(API+'/auth/register', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre: nom+' '+ape, cedula: doc, password: p1, telefono: cel })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Error al registrar');
-    showAlert('reg-alert', '¡Cuenta creada! Inicia sesión.', 'ok');
-    setTimeout(() => go('s-login'), 1500);
-  } catch(e) {
-    usuario = { nombre: nom+' '+ape, tipo: 'estudiante' };
-    token = 'token_'+doc;
-    localStorage.setItem('pq_token', token);
-    localStorage.setItem('pq_usuario', JSON.stringify(usuario));
-    go('s-inicio'); actualizarInicio();
-  }
-}
-
-// ─── LOGIN ──────────────────────────────────────────
-async function doLogin() {
-  const doc  = document.getElementById('login-doc').value.trim();
-  const pass = document.getElementById('login-pass').value;
-
-  if (!doc || !pass) { showAlert('login-alert', 'Completa todos los campos'); return; }
-  if (!validarCedula(doc, 'login-alert')) return;
-  if (!validarPassword(pass, 'login-alert')) return;
-
-  try {
-    const res = await fetch(API+'/auth/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cedula: doc, password: pass })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Credenciales incorrectas');
-    token = data.token;
-    usuario = data.usuario || { nombre: 'Usuario' };
-    localStorage.setItem('pq_token', token);
-    localStorage.setItem('pq_usuario', JSON.stringify(usuario));
-    go('s-inicio'); actualizarInicio();
-  } catch(e) {
-    token = 'demo_token';
-    usuario = { nombre: doc, tipo: 'santiaguino' };
-    localStorage.setItem('pq_token', token);
-    localStorage.setItem('pq_usuario', JSON.stringify(usuario));
-    go('s-inicio'); actualizarInicio();
-  }
-}
-
-// ─── REGISTRO VISITANTE ────────────────────────
-function doRegistroVisitante() {
-  const doc  = document.getElementById('vis-doc').value.trim();
-  const nom  = document.getElementById('vis-nombre').value.trim();
-  const ape  = document.getElementById('vis-apellido').value.trim();
-  const pass = document.getElementById('vis-pass').value;
-
-  if (!doc || !nom || !ape || !pass) { showAlert('vis-alert', 'Completa todos los campos'); return; }
-  if (!validarCedula(doc, 'vis-alert')) return;
-  if (!validarNombre(nom, 'El nombre', 'vis-alert')) return;
-  if (!validarNombre(ape, 'El apellido', 'vis-alert')) return;
-  if (!validarPassword(pass, 'vis-alert')) return;
-
-  usuario = { nombre: nom+' '+ape, tipo: 'visitante' };
-  token = 'visitante_'+doc;
-  localStorage.setItem('pq_token', token);
-  localStorage.setItem('pq_usuario', JSON.stringify(usuario));
-  go('s-inicio'); actualizarInicio();
-}
-
-// ─── REGISTRO SANTIAGUINO ──────────────────────
-function doRegistroSantiaguino() {
-  const doc  = document.getElementById('san-doc').value.trim();
-  const nom  = document.getElementById('san-nombre').value.trim();
-  const ape  = document.getElementById('san-apell').value.trim();
-  const p1   = document.getElementById('san-pass1').value;
-  const p2   = document.getElementById('san-pass2').value;
-  const tel  = document.getElementById('san-tel').value.trim();
-  const perf = document.getElementById('san-perfil').value;
-
-  if (!doc || !nom || !ape || !p1 || !p2 || !tel || !perf) { showAlert('san-alert', 'Completa todos los campos'); return; }
-  if (!validarCedula(doc, 'san-alert')) return;
-  if (!validarNombre(nom, 'El nombre', 'san-alert')) return;
-  if (!validarNombre(ape, 'El apellido', 'san-alert')) return;
-  if (!validarCelular(tel, 'san-alert')) return;
-  if (!validarPassword(p1, 'san-alert')) return;
-  if (p1 !== p2) { showAlert('san-alert', 'Las contraseñas no coinciden'); return; }
-  go('s-otp');
-}
-
-// ─── VERIFICAR OTP ───────────────────────────────
-function doVerificarOTP() {
-  const codigo = ['otp1','otp2','otp3','otp4'].map(id=>document.getElementById(id).value).join('');
-  if (codigo.length < 4) { alert('Ingresa el código completo'); return; }
-  // Demo: cualquier código de 4 dígitos funciona
-  usuario = { nombre: document.getElementById('san-nombre').value+' '+document.getElementById('san-apell').value, tipo: document.getElementById('san-perfil').value };
-  token = 'token_'+Date.now();
-  localStorage.setItem('pq_token', token);
-  localStorage.setItem('pq_usuario', JSON.stringify(usuario));
-  go('s-menu');
-}
-
-// ─── RESERVA ─────────────────────────────────────
-function doReserva(tipo, screen) {
-  const alertId = {
-    's-reserva-carro': 'rc-alert',
-    's-reserva-moto':  'rm-alert',
-    's-reserva-bici':  'rb-alert',
-    's-reserva-pat':   'rp-alert'
-  }[screen];
-
-  let placa='', fecha='';
-  if (screen==='s-reserva-carro') { placa=document.getElementById('rc-placa').value.trim(); fecha=document.getElementById('rc-fecha').value; }
-  if (screen==='s-reserva-moto')  { placa=document.getElementById('rm-placa').value.trim(); fecha=document.getElementById('rm-fecha').value; }
-  if (screen==='s-reserva-bici')  { placa='Bici'; fecha=document.getElementById('rb-fecha').value; }
-  if (screen==='s-reserva-pat')   { placa=document.getElementById('rp-placa').value.trim()||'S/P'; fecha=document.getElementById('rp-fecha').value; }
-
-  if (!fecha) { showAlert(alertId,'Selecciona fecha y hora de reserva'); return; }
-
-  const nuevaReserva = {
-    id: Date.now(),
-    tipo,
-    placa: placa || 'N/A',
-    fecha: fecha,
-    estado: 'Activa',
-    timestamp: new Date().toLocaleString('es-CO')
-  };
-  reservas.unshift(nuevaReserva);
-  localStorage.setItem('pq_reservas', JSON.stringify(reservas));
-  renderHistorial();
-  go('s-reserva-ok');
-}
-
-// ─── HISTORIAL ───────────────────────────────────
-function renderHistorial() {
-  const lista = document.getElementById('historial-lista');
-  if (!reservas.length) {
-    lista.innerHTML = '<div class="historial-empty">No hay reservas registradas aún.</div>';
+  if (!doc || !nom || !ape || !cel || !p1 || !p2) {
+    showAlert('reg-alert', 'Completa todos los campos');
     return;
   }
-  lista.innerHTML = reservas.map(r => `
-    <div class="historial-item">
-      <strong>${r.tipo}</strong> — Placa: ${r.placa}
-      <span class="estado ${r.estado==='Cancelada'?'salida':''}">${r.estado}</span><br>
-      📅 ${new Date(r.fecha).toLocaleString('es-CO', {dateStyle:'short', timeStyle:'short'})}<br>
-      <span style="opacity:0.6;font-size:11px;">Registrada: ${r.timestamp}</span>
-    </div>
-  `).join('');
+
+  if (p1 !== p2) {
+    showAlert('reg-alert', 'Las contraseñas no coinciden');
+    return;
+  }
+
+  try {
+    const res = await fetch(API + '/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: nom + ' ' + ape,
+        cedula: doc,
+        telefono: cel,
+        password: p1
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Error al registrar');
+    }
+
+    showAlert('reg-alert', '¡Cuenta creada! Inicia sesión', 'ok');
+    setTimeout(() => go('s-login'), 1500);
+
+  } catch (e) {
+    showAlert('reg-alert', e.message);
+  }
 }
 
-// ─── CERRAR SESIÓN ───────────────────────────────
+// cerrar sesion
 function cerrarSesion() {
-  token = null; usuario = null;
+  token = null;
+  usuario = null;
   localStorage.removeItem('pq_token');
   localStorage.removeItem('pq_usuario');
-  go('s-inicio'); actualizarInicio();
+  go('s-inicio');
+  actualizarInicio();
 }
 
-// ─── RECUPERAR CONTRASEÑA ─────────────────────
-function doRecuperar() {
-  const doc = document.getElementById('rec-doc').value.trim();
-  const cel = document.getElementById('rec-cel').value.trim();
-
-  if (!doc || !cel) { showAlert('rec-alert', 'Completa todos los campos'); return; }
-  if (!validarCedula(doc, 'rec-alert')) return;
-  if (!validarCelular(cel, 'rec-alert')) return;
-
-  // Ocultar alert de error y mostrar éxito
-  document.getElementById('rec-alert').classList.remove('show');
-  const ok = document.getElementById('rec-ok');
-  ok.textContent = '¡Te enviaremos tu contraseña temporal al celular ' + cel + '!';
-  ok.classList.add('show');
-
-  // Limpiar campos
-  document.getElementById('rec-doc').value = '';
-  document.getElementById('rec-cel').value = '';
-
-  // Volver al login después de 2.5s
-  setTimeout(() => {
-    ok.classList.remove('show');
-    go('s-login');
-  }, 2500);
-}
-
-// ─── INIT ────────────────────────────────────────
-renderHistorial();
-
+// inicio
 function actualizarInicio() {
   var saludo    = document.getElementById('inicio-saludo');
   var sinSesion = document.getElementById('inicio-sin-sesion');
   var conSesion = document.getElementById('inicio-con-sesion');
+
   if (token && usuario) {
-    saludo.textContent = 'Bienvenido, ' + (usuario.nombre || 'usuario') + ' :)';
+    saludo.textContent = 'Bienvenido, ' + (usuario.nombre || 'usuario');
     saludo.style.display = 'block';
     sinSesion.style.display = 'none';
     conSesion.style.display = 'flex';
@@ -978,9 +814,10 @@ function actualizarInicio() {
   }
 }
 
+
 actualizarInicio();
 
-// Enter en login
+// login
 document.getElementById('login-pass').addEventListener('keydown', e => {
   if (e.key==='Enter') doLogin();
 });
