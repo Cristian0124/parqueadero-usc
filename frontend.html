@@ -669,9 +669,6 @@ body {
   <div class="spacer"></div>
   <button class="btn-link" onclick="go('s-login')">ATRÁS</button>
 </div>
-
-</div><!-- /phone-wrap -->
-
 <script>
 // ─── CONFIG ─────────────────────────────────────
 const API = 'https://parqueadero-usc-production.up.railway.app/api';
@@ -729,7 +726,11 @@ async function doLogin() {
 
     localStorage.setItem('pq_token', token);
     localStorage.setItem('pq_usuario', JSON.stringify(usuario));
+
+    // 🔥 CLAVE: RESET + CARGA POR USUARIO
+    reservas = [];
     reservas = JSON.parse(localStorage.getItem('pq_reservas_' + usuario.cedula) || '[]');
+
     go('s-inicio');
     actualizarInicio();
 
@@ -785,14 +786,19 @@ async function doRegistro() {
 function cerrarSesion() {
   token = null;
   usuario = null;
+  reservas = []; // 🔥 RESET
+
   localStorage.removeItem('pq_token');
   localStorage.removeItem('pq_usuario');
+
   go('s-inicio');
   actualizarInicio();
 }
 
 // ─── INICIO UI ──────────────────────────────────
 function actualizarInicio() {
+  if (!usuario) reservas = [];
+
   var saludo    = document.getElementById('inicio-saludo');
   var sinSesion = document.getElementById('inicio-sin-sesion');
   var conSesion = document.getElementById('inicio-con-sesion');
@@ -847,7 +853,9 @@ function doReserva(tipo, screen) {
   };
 
   reservas.push(nueva);
- localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
+
+  // 🔥 GUARDAR POR USUARIO
+  localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
 
   renderHistorial();
   go('s-reserva-ok');
@@ -884,5 +892,6 @@ document.getElementById('login-doc').addEventListener('keydown', e => {
   if (e.key==='Enter') document.getElementById('login-pass').focus();
 });
 </script>
+</div><!-- /phone-wrap -->
 </body>
 </html>
