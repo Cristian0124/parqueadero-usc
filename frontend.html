@@ -475,6 +475,65 @@ body {
 .btn-salida:hover { background: #222; transform: scale(1.02); }
 .btn-salida.disabled { opacity: 0.35; pointer-events: none; }
 
+/* ── TEMPORIZADOR ── */
+.timer-card {
+  width: 100%;
+  background: #1a0a8f;
+  border-radius: 14px;
+  padding: 14px 20px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 10px;
+}
+.timer-card.visible { display: flex; }
+.timer-label {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 13px;
+  color: #7bc8ff;
+  letter-spacing: 0.5px;
+}
+.timer-count {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 28px;
+  color: #fff;
+  letter-spacing: 2px;
+  min-width: 80px;
+  text-align: right;
+}
+.timer-count.urgente { color: #f87171; }
+
+/* ── ESPACIO CARD ── */
+.espacio-card {
+  background: #1a0a8f;
+  border-radius: 14px;
+  padding: 16px 14px;
+  text-align: center;
+  color: #fff;
+}
+.espacio-card .ec-tipo {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  color: #7bc8ff;
+}
+.espacio-card .ec-num {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 38px;
+  line-height: 1;
+  color: #fff;
+}
+.espacio-card .ec-label {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+.espacio-card.lleno .ec-num { color: #f87171; }
+.espacio-card.lleno .ec-tipo { color: #f87171; }
+
 /* ── QR SALIDA SCREEN ── */
 .qr-salida-badge {
   background: #0a0a0a;
@@ -656,6 +715,14 @@ body {
 <div id="s-menu" class="screen">
   <div class="section-title">MENÚ PRINCIPAL</div>
   <div class="gap"></div>
+  <!-- Temporizador reserva activa -->
+  <div id="timer-card" class="timer-card">
+    <div>
+      <div class="timer-label">RESERVA ACTIVA</div>
+      <div id="timer-tipo" style="font-family:'Black Han Sans',sans-serif;font-size:15px;color:#fff;"></div>
+    </div>
+    <div id="timer-count" class="timer-count">--:--</div>
+  </div>
   <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:#0a0a0a;width:100%;margin-bottom:14px;">RESERVAR PUESTO</div>
   <button class="vehicle-option" onclick="go('s-reserva-carro')">
     <div class="vehicle-dot"></div> CARRO
@@ -764,13 +831,15 @@ body {
 ══════════════════════════════ -->
 <div id="s-espacios" class="screen">
   <div class="section-title center">ESPACIOS DISPONIBLES</div>
+  <div id="espacios-loading" style="font-family:'Black Han Sans',sans-serif;font-size:16px;color:#0a0a0a;opacity:0.5;text-align:center;margin:20px 0;">Cargando...</div>
+  <div id="espacios-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;"></div>
   <div class="map-placeholder">
     <span style="font-size:32px;">🗺️</span>
     <span>Mapa del campus USC</span>
     <span style="font-size:11px;opacity:0.5;">Universidad Santiago de Cali</span>
   </div>
   <div class="spacer"></div>
-  <button class="btn-link" onclick="history.back(); go(prevScreen)">ATRÁS</button>
+  <button class="btn-link" onclick="go(prevScreen)">ATRÁS</button>
 </div>
 
 <!-- ══════════════════════════════
@@ -879,6 +948,17 @@ function go(id) {
   // Actualizar botón de salida al entrar al menú
   if (id === 's-menu') {
     setTimeout(actualizarBotonSalida, 50);
+    setTimeout(iniciarTemporizador, 50);
+  }
+
+  // Cargar espacios al entrar a esa pantalla
+  if (id === 's-espacios') {
+    cargarEspacios();
+  }
+
+  // Cargar historial del servidor al entrar
+  if (id === 's-historial') {
+    cargarHistorial();
   }
 }
 
@@ -918,9 +998,9 @@ async function doLogin() {
     localStorage.setItem('pq_token', token);
     localStorage.setItem('pq_usuario', JSON.stringify(usuario));
 
-    // 🔥 CLAVE: RESET + CARGA POR USUARIO
-    reservas = [];
+    // Cargar reservas del servidor (con fallback a local)
     reservas = JSON.parse(localStorage.getItem('pq_reservas_' + usuario.cedula) || '[]');
+    await cargarHistorial();
 
     go('s-inicio');
     actualizarInicio();
@@ -1006,93 +1086,160 @@ function actualizarInicio() {
   }
 }
 
-// ─── RESERVAS ───────────────────────────────────
-function doReserva(tipo, screen) {
-  let placa = '';
-  let fecha = '';
+// ─── RESERVAS — conectado al backend ────────────────────────
+async function doReserva(tipo, screen) {
+  let placa = '', fecha = '';
 
-  if (screen === 's-reserva-carro') {
-    placa = document.getElementById('rc-placa').value;
-    fecha = document.getElementById('rc-fecha').value;
+  if (screen === 's-reserva-carro') { placa = document.getElementById('rc-placa').value; fecha = document.getElementById('rc-fecha').value; }
+  if (screen === 's-reserva-moto')  { placa = document.getElementById('rm-placa').value; fecha = document.getElementById('rm-fecha').value; }
+  if (screen === 's-reserva-bici')  { placa = 'Bici'; fecha = document.getElementById('rb-fecha').value; }
+  if (screen === 's-reserva-pat')   { placa = document.getElementById('rp-placa').value || 'S/P'; fecha = document.getElementById('rp-fecha').value; }
+
+  if (!fecha) { alert('Selecciona fecha y hora'); return; }
+
+  try {
+    const res = await fetch(API + '/reservas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ tipo, placa, fecha_reserva: fecha })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+
+    const nueva = { ...data.reserva, estado: 'Activa', fecha: data.reserva.fecha_reserva, qrToken: data.reserva.qr_token, qrSalidaToken: data.reserva.qr_salida_token };
+    reservas.unshift(nueva);
+    localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
+    renderHistorial(); actualizarBotonSalida(); iniciarTemporizador();
+    mostrarQRReserva(nueva);
+    go('s-reserva-ok');
+
+  } catch (e) {
+    // Fallback offline
+    const qrToken = 'PQ-' + Date.now() + '-' + Math.random().toString(36).substr(2,6).toUpperCase();
+    const expiraEn = new Date(fecha); expiraEn.setMinutes(expiraEn.getMinutes() + 60);
+    const nueva = { tipo, placa, fecha, fecha_reserva: fecha, estado: 'Activa', qrToken, qr_token: qrToken, qrSalidaToken: 'SALIDA-' + qrToken, qr_salida_token: 'SALIDA-' + qrToken, expira_en: expiraEn.toISOString() };
+    reservas.unshift(nueva);
+    localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
+    renderHistorial(); actualizarBotonSalida(); iniciarTemporizador();
+    mostrarQRReserva(nueva);
+    go('s-reserva-ok');
   }
+}
 
-  if (screen === 's-reserva-moto') {
-    placa = document.getElementById('rm-placa').value;
-    fecha = document.getElementById('rm-fecha').value;
+// ─── CARGAR HISTORIAL DESDE EL SERVIDOR ─────────────────────
+async function cargarHistorial() {
+  if (!token) return;
+  try {
+    const res = await fetch(API + '/reservas', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    reservas = data.map(r => ({
+      ...r,
+      estado: r.estado === 'activa' ? 'Activa' : r.estado === 'completada' ? 'Completada' : r.estado,
+      fecha: r.fecha_reserva,
+      qrToken: r.qr_token,
+      qrSalidaToken: r.qr_salida_token
+    }));
+    localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
+  } catch (e) { /* usa datos locales */ }
+  renderHistorial(); actualizarBotonSalida(); iniciarTemporizador();
+}
+
+// ─── ESPACIOS DISPONIBLES EN TIEMPO REAL ────────────────────
+async function cargarEspacios() {
+  const grid = document.getElementById('espacios-grid');
+  const loading = document.getElementById('espacios-loading');
+  if (!grid) return;
+  grid.innerHTML = '';
+  if (loading) loading.style.display = 'block';
+
+  const iconos = { Carro: '🚗', Moto: '🏍️', Bicicleta: '🚲', Patineta: '🛴' };
+  try {
+    const res = await fetch(API + '/reservas/espacios', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    if (loading) loading.style.display = 'none';
+    data.forEach(e => {
+      const lleno = e.disponibles === 0;
+      grid.innerHTML += `<div class="espacio-card ${lleno ? 'lleno' : ''}">
+        <div class="ec-tipo">${iconos[e.tipo] || ''} ${e.tipo.toUpperCase()}</div>
+        <div class="ec-num">${e.disponibles}</div>
+        <div class="ec-label">de ${e.capacidad_total} disponibles</div>
+      </div>`;
+    });
+  } catch (e) {
+    if (loading) loading.textContent = 'Sin conexión — intenta más tarde';
   }
+}
 
-  if (screen === 's-reserva-bici') {
-    placa = 'Bici';
-    fecha = document.getElementById('rb-fecha').value;
-  }
+// ─── TEMPORIZADOR DE RESERVA ACTIVA ─────────────────────────
+let timerInterval = null;
 
-  if (screen === 's-reserva-pat') {
-    placa = document.getElementById('rp-placa').value || 'S/P';
-    fecha = document.getElementById('rp-fecha').value;
-  }
+function iniciarTemporizador() {
+  const card = document.getElementById('timer-card');
+  const countEl = document.getElementById('timer-count');
+  const tipoEl = document.getElementById('timer-tipo');
+  if (!card) return;
 
-  if (!fecha) {
-    alert('Selecciona fecha');
+  const activa = reservas.find(r => r.estado === 'Activa' || r.estado === 'activa');
+  if (!activa) {
+    card.classList.remove('visible');
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     return;
   }
 
-  // Generar token único para el QR
-  const qrToken = 'PQ-' + Date.now() + '-' + Math.random().toString(36).substr(2,6).toUpperCase();
+  const fechaObj = new Date(activa.fecha_reserva || activa.fecha);
+  tipoEl.textContent = activa.tipo;
+  card.classList.add('visible');
+  if (timerInterval) clearInterval(timerInterval);
 
-  const nueva = {
-    tipo,
-    placa,
-    fecha,
-    estado: 'Activa',
-    qrToken
-  };
-
-  reservas.push(nueva);
-
-  // 🔥 GUARDAR POR USUARIO
-  localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
-
-  renderHistorial();
-  mostrarQRReserva(nueva);
-  go('s-reserva-ok');
+  function tick() {
+    const diff = fechaObj - new Date();
+    const urgente = diff > 0 && diff < 10 * 60 * 1000;
+    if (diff < 0) {
+      countEl.textContent = '+' + Math.floor(Math.abs(diff) / 60000) + ' min';
+      countEl.className = 'timer-count urgente';
+    } else {
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      countEl.textContent = (h > 0 ? h + 'h ' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      countEl.className = 'timer-count' + (urgente ? ' urgente' : '');
+    }
+  }
+  tick();
+  timerInterval = setInterval(tick, 1000);
 }
 
-// ─── MOSTRAR QR DE RESERVA ──────────────────────
+// ─── MOSTRAR QR DE RESERVA (entrada) ────────────────────────
 function mostrarQRReserva(reserva) {
-  // Actualizar badge de tipo
   document.getElementById('qr-badge-tipo').textContent = reserva.tipo.toUpperCase();
 
-  // Info de la reserva
-  const fechaFormateada = reserva.fecha
-    ? new Date(reserva.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
+  const fechaF = (reserva.fecha_reserva || reserva.fecha)
+    ? new Date(reserva.fecha_reserva || reserva.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
     : '';
-  document.getElementById('qr-info-texto').innerHTML =
-    (reserva.placa && reserva.placa !== 'Bici' && reserva.placa !== 'S/P'
-      ? '<strong>Placa:</strong> ' + reserva.placa + '<br>' : '') +
-    '<strong>Fecha:</strong> ' + fechaFormateada + '<br>' +
-    '<small style="opacity:0.5;font-size:11px;">' + reserva.qrToken + '</small>';
+  const expiraF = reserva.expira_en
+    ? new Date(reserva.expira_en).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })
+    : '';
 
-  // Limpiar QR anterior y generar nuevo
+  document.getElementById('qr-info-texto').innerHTML =
+    (reserva.placa && reserva.placa !== 'Bici' && reserva.placa !== 'S/P' ? '<strong>Placa:</strong> ' + reserva.placa + '<br>' : '') +
+    '<strong>Fecha:</strong> ' + fechaF + '<br>' +
+    (expiraF ? '<span style="color:#c0392b;font-size:12px;">⏱ Vence: ' + expiraF + '</span>' : '');
+
   const container = document.getElementById('qr-canvas-container');
   container.innerHTML = '';
 
-  // Datos del QR: JSON con info de la reserva
   const qrData = JSON.stringify({
-    token: reserva.qrToken,
+    token: reserva.qr_token || reserva.qrToken,
     tipo: reserva.tipo,
     placa: reserva.placa,
-    fecha: reserva.fecha,
+    fecha: reserva.fecha_reserva || reserva.fecha,
+    expira_en: reserva.expira_en,
     usuario: usuario ? usuario.cedula : 'visitante'
   });
 
-  new QRCode(container, {
-    text: qrData,
-    width: 200,
-    height: 200,
-    colorDark: '#0a0a0a',
-    colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.M
-  });
+  new QRCode(container, { text: qrData, width: 200, height: 200, colorDark: '#0a0a0a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
 }
 
 // ─── HISTORIAL ──────────────────────────────────
