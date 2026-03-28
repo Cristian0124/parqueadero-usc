@@ -999,7 +999,7 @@ async function doLogin() {
     localStorage.setItem('pq_usuario', JSON.stringify(usuario));
 
     // Cargar reservas del servidor (con fallback a local)
-    reservas = JSON.parse(localStorage.getItem('pq_reservas_' + usuario.cedula) || '[]');
+    localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
     await cargarHistorial();
 
     go('s-inicio');
@@ -1098,32 +1098,25 @@ async function doReserva(tipo, screen) {
   if (!fecha) { alert('Selecciona fecha y hora'); return; }
 
   try {
-    const res = await fetch(API + '/reservas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ tipo, placa, fecha_reserva: fecha })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message);
+  const res = await fetch(API + '/reservas', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({ tipo, placa, fecha_reserva: fecha })
+  });
 
-    const nueva = { ...data.reserva, estado: 'Activa', fecha: data.reserva.fecha_reserva, qrToken: data.reserva.qr_token, qrSalidaToken: data.reserva.qr_salida_token };
-    reservas.unshift(nueva);
-    localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
-    renderHistorial(); actualizarBotonSalida(); iniciarTemporizador();
-    mostrarQRReserva(nueva);
-    go('s-reserva-ok');
+  const data = await res.json();
 
-  } catch (e) {
-    // Fallback offline
-    const qrToken = 'PQ-' + Date.now() + '-' + Math.random().toString(36).substr(2,6).toUpperCase();
-    const expiraEn = new Date(fecha); expiraEn.setMinutes(expiraEn.getMinutes() + 60);
-    const nueva = { tipo, placa, fecha, fecha_reserva: fecha, estado: 'Activa', qrToken, qr_token: qrToken, qrSalidaToken: 'SALIDA-' + qrToken, qr_salida_token: 'SALIDA-' + qrToken, expira_en: expiraEn.toISOString() };
-    reservas.unshift(nueva);
-    localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
-    renderHistorial(); actualizarBotonSalida(); iniciarTemporizador();
-    mostrarQRReserva(nueva);
-    go('s-reserva-ok');
-  }
+  if (!res.ok) throw new Error(data.message);
+
+  await cargarHistorial();
+
+  go('s-reserva-ok');
+
+} catch (e) {
+  alert(e.message);
 }
 
 // ─── CARGAR HISTORIAL DESDE EL SERVIDOR ─────────────────────
