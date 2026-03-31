@@ -2,30 +2,50 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Parqueadero USC"/>
+<meta name="theme-color" content="#3BB8F5"/>
+<meta http-equiv="Permissions-Policy" content="camera=*"/>
 <title>Parqueadero USC</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html {
+  height: -webkit-fill-available;
+}
 
 body {
   font-family: 'Nunito', sans-serif;
   background: #3BB8F5;
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .phone-wrap {
   width: 100%;
   max-width: 430px;
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   background: #3BB8F5;
   position: relative;
   overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* ── SCREENS ── */
@@ -89,7 +109,7 @@ body {
   border-radius: 50px;
   padding: 16px 24px;
   font-family: 'Nunito', sans-serif;
-  font-size: 16px;
+  font-size: 16px; /* Mínimo 16px para evitar zoom automático en iOS */
   font-weight: 700;
   color: #0a0a0a;
   outline: none;
@@ -97,6 +117,7 @@ body {
   position: relative;
   transition: border-color 0.2s, background 0.2s;
   -webkit-appearance: none;
+  touch-action: manipulation;
 }
 .bubble-input:focus {
   border-color: #1a6fbf;
@@ -119,6 +140,7 @@ body {
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
+  touch-action: manipulation;
 }
 
 /* ── BUTTONS ── */
@@ -135,6 +157,9 @@ body {
   text-align: center;
   letter-spacing: 0.5px;
   transition: opacity 0.2s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px; /* Tamaño mínimo táctil recomendado */
 }
 .btn-link:hover { opacity: 0.75; }
 .btn-link.dark { color: #0a0a0a; }
@@ -154,6 +179,9 @@ body {
   margin: 8px 0;
   transition: background 0.2s, transform 0.1s;
   letter-spacing: 0.5px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
 }
 .btn-bubble:hover { background: #e0e0e0; transform: scale(1.02); }
 .btn-bubble.full { width: 100%; }
@@ -410,11 +438,19 @@ body {
   overflow: hidden;
   border: 3px solid #0a0a0a;
   background: #0a0a0a;
-  min-height: 260px;
+  min-height: 280px;
   position: relative;
 }
 #qr-scanner-region video {
   border-radius: 13px;
+  width: 100% !important;
+  height: auto !important;
+  object-fit: cover;
+}
+/* Forzar que el canvas interno también sea responsivo */
+#qr-scanner-region canvas {
+  width: 100% !important;
+  height: auto !important;
 }
 #html5-qrcode-button-camera-permission,
 #html5-qrcode-button-camera-start,
@@ -425,10 +461,12 @@ body {
   color: #fff !important;
   border: none !important;
   border-radius: 50px !important;
-  padding: 10px 24px !important;
+  padding: 12px 24px !important;
   cursor: pointer !important;
-  margin: 8px auto !important;
+  margin: 10px auto !important;
   display: block !important;
+  min-height: 44px !important;
+  touch-action: manipulation !important;
 }
 .qr-scan-status {
   font-family: 'Black Han Sans', sans-serif;
@@ -644,9 +682,9 @@ body {
   </div>
   <div class="qr-scan-status" id="qr-scan-status">Apunta la cámara al código QR</div>
   <div class="gap"></div>
-  <button class="btn-link small" onclick="stopQRScanner(); go('s-login')" style="font-size:16px; color:#4a3cbf;">¿No tienes QR? inicia sesión manual</button>
+  <button class="btn-link small" onclick="stopQRScanner().then(()=>go('s-login'))" style="font-size:16px; color:#4a3cbf;">¿No tienes QR? inicia sesión manual</button>
   <div class="spacer"></div>
-  <button class="btn-link" onclick="stopQRScanner(); go('s-inicio')">ATRÁS</button>
+  <button class="btn-link" onclick="stopQRScanner().then(()=>go('s-inicio'))">ATRÁS</button>
 </div>
 
 <!-- ══════════════════════════════
@@ -899,6 +937,7 @@ body {
 <!-- ══════════════════════════════
      SCREEN — RECUPERAR CONTRASEÑA
 ══════════════════════════════ -->
+<div id="s-recuperar" class="screen">
   <div class="big-title">PARQUEADERO<br>USC</div>
   <div class="sub-title">Recupera tu acceso</div>
   <div class="gap"></div>
@@ -922,7 +961,7 @@ let prevScreen = 's-menu';
 let reservas = [];
 
 // ─── NAV ────────────────────────────────────────
-function go(id) {
+async function go(id) {
   if (id === 's-menu' && !token) {
     showAlert('login-alert', 'Debes iniciar sesión');
     return;
@@ -931,7 +970,7 @@ function go(id) {
   const prev = document.querySelector('.screen.active');
   if (prev) {
     // Detener scanner si salimos de la pantalla QR
-    if (prev.id === 's-qr') stopQRScanner();
+    if (prev.id === 's-qr') await stopQRScanner();
     prevScreen = prev.id;
     prev.classList.remove('active');
   }
@@ -942,7 +981,7 @@ function go(id) {
 
   // Arrancar scanner al entrar a la pantalla QR
   if (id === 's-qr') {
-    setTimeout(startQRScanner, 300);
+    setTimeout(startQRScanner, 400);
   }
 
   // Actualizar botón de salida al entrar al menú
@@ -1330,31 +1369,90 @@ function finalizarReserva() {
 // ─── QR SCANNER (LOGIN) ─────────────────────────
 let html5QrScanner = null;
 
-function startQRScanner() {
+async function solicitarPermisoCamara() {
+  try {
+    // Solicitar permiso explícitamente antes de iniciar el escáner
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    // Detener el stream inmediatamente, solo necesitábamos el permiso
+    stream.getTracks().forEach(t => t.stop());
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+async function startQRScanner() {
   const statusEl = document.getElementById('qr-scan-status');
   statusEl.textContent = 'Iniciando cámara...';
   statusEl.className = 'qr-scan-status';
 
+  // Verificar soporte de cámara
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    statusEl.textContent = 'Tu navegador no soporta acceso a la cámara. Usa Chrome o Safari actualizado.';
+    statusEl.className = 'qr-scan-status err';
+    return;
+  }
+
+  // Solicitar permiso primero (mejora experiencia en iOS Safari)
+  const permiso = await solicitarPermisoCamara();
+  if (!permiso) {
+    statusEl.innerHTML = 'Sin permiso de cámara.<br><small>Ve a Configuración > Safari/Chrome > Permisos de cámara y actívalo.</small>';
+    statusEl.className = 'qr-scan-status err';
+    return;
+  }
+
+  // Limpiar instancia previa si existe
+  if (html5QrScanner) {
+    try { await html5QrScanner.stop(); } catch(e) {}
+    html5QrScanner = null;
+  }
+
   html5QrScanner = new Html5Qrcode('qr-scanner-region');
 
+  const config = {
+    fps: 10,
+    qrbox: { width: 220, height: 220 },
+    aspectRatio: 1.0,
+    disableFlip: false
+  };
+
+  // En móviles preferir cámara trasera, con fallback a cualquier cámara
+  const cameraConstraints = { facingMode: { ideal: 'environment' } };
+
   html5QrScanner.start(
-    { facingMode: 'environment' },
-    { fps: 10, qrbox: { width: 220, height: 220 } },
+    cameraConstraints,
+    config,
     (decodedText) => {
       onQRScanned(decodedText);
     },
-    () => {}
-  ).catch(() => {
-    statusEl.textContent = 'No se pudo acceder a la cámara. Verifica los permisos.';
-    statusEl.className = 'qr-scan-status err';
+    () => {} // Ignorar errores de frame (normales durante escaneo)
+  ).catch(async (err) => {
+    // Fallback: intentar con cualquier cámara disponible
+    try {
+      await html5QrScanner.start({ facingMode: 'user' }, config,
+        (decodedText) => { onQRScanned(decodedText); },
+        () => {}
+      );
+    } catch(e2) {
+      statusEl.innerHTML = 'No se pudo acceder a la cámara.<br><small>Verifica los permisos en tu navegador.</small>';
+      statusEl.className = 'qr-scan-status err';
+    }
   });
 }
 
-function stopQRScanner() {
+async function stopQRScanner() {
   if (html5QrScanner) {
-    html5QrScanner.stop().catch(() => {});
+    try {
+      await html5QrScanner.stop();
+    } catch(e) {}
+    try {
+      html5QrScanner.clear();
+    } catch(e) {}
     html5QrScanner = null;
   }
+  // Limpiar el contenedor del scanner para que no quede el video residual
+  const region = document.getElementById('qr-scanner-region');
+  if (region) region.innerHTML = '';
 }
 
 function onQRScanned(texto) {
@@ -1426,6 +1524,21 @@ document.getElementById('login-pass').addEventListener('keydown', e => {
 document.getElementById('login-doc').addEventListener('keydown', e => {
   if (e.key==='Enter') document.getElementById('login-pass').focus();
 });
+
+// ─── SERVICE WORKER (PWA) ───────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+// ─── PREVENIR ZOOM AL HACER DOBLE TAP (iOS) ─────
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
 </script>
 </div><!-- /phone-wrap -->
 </body>
