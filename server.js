@@ -11,6 +11,11 @@ const db = require("./config/db");
 
 const app = express();
 
+// 🔥 Healthcheck (MUY IMPORTANTE - poner arriba)
+app.get("/", (req, res) => {
+  res.status(200).send("OK");
+});
+
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -26,21 +31,16 @@ setInterval(() => {
     "UPDATE reservas SET estado = 'expirada' WHERE estado = 'activa' AND expira_en < NOW()",
     (err, result) => {
       if (!err && result.affectedRows > 0) {
-        console.log(`⏰ ${result.affectedRows} reserva(s) expirada(s) canceladas`);
+        console.log(`${result.affectedRows} reserva(s) expirada(s) canceladas`);
       }
     }
   );
 }, 5 * 60 * 1000);
 
-// Servir frontend
+// Servir frontend (opcional)
 app.use(express.static(__dirname));
 
-// Ruta de prueba
-app.get("/", (req, res) => {
-  res.json({ message: "🚗 API Parqueadero USC funcionando" });
-});
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en puerto ${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
 });

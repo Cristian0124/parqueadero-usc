@@ -4,12 +4,20 @@ require("dotenv").config();
 const isRailway = !!process.env.DATABASE_URL;
 
 const pool = isRailway
-  ? mysql.createPool({
-      uri: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-      waitForConnections: true,
-      connectionLimit: 10,
-    })
+  ? (() => {
+      const url = new URL(process.env.DATABASE_URL);
+
+      return mysql.createPool({
+        host: url.hostname,
+        port: url.port,
+        user: url.username,
+        password: url.password,
+        database: url.pathname.replace("/", ""),
+        ssl: { rejectUnauthorized: false },
+        waitForConnections: true,
+        connectionLimit: 10,
+      });
+    })()
   : mysql.createPool({
       host: process.env.DB_HOST || "localhost",
       port: process.env.DB_PORT || 3306,
