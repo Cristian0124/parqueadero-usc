@@ -91,7 +91,13 @@ exports.obtenerReservas = (req, res) => {
     (err, result) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ message: "Error al obtener reservas" });
+  if (err) {
+  console.error("ERROR REAL:", err);
+  return res.status(500).json({ 
+    message: "Error al obtener reservas",
+    error: err.message
+  });}
+  
       }
       res.json(result);
     }
