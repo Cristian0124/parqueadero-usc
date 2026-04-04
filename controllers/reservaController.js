@@ -86,13 +86,13 @@ exports.obtenerReservas = (req, res) => {
   const usuario_id = req.userId;
 
   db.query(
-    `SELECT id, tipo, placa, fecha_reserva, qr_token, qr_salida_token,
-            expira_en, estado, hora_salida
-     FROM reservas WHERE usuario_id = ?
-     ORDER BY fecha_reserva DESC`,
+    `SELECT * FROM reservas WHERE usuario_id = ? ORDER BY fecha_reserva DESC`,
     [usuario_id],
     (err, result) => {
-      if (err) return res.status(500).json({ message: "Error al obtener reservas" });
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Error al obtener reservas" });
+      }
       res.json(result);
     }
   );
