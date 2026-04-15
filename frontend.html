@@ -109,7 +109,7 @@ body {
   border-radius: 50px;
   padding: 16px 24px;
   font-family: 'Nunito', sans-serif;
-  font-size: 16px; /* Mínimo 16px para evitar zoom automático en iOS */
+  font-size: 16px; 
   font-weight: 700;
   color: #0a0a0a;
   outline: none;
@@ -159,7 +159,7 @@ body {
   transition: opacity 0.2s;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  min-height: 44px; /* Tamaño mínimo táctil recomendado */
+  min-height: 44px; 
 }
 .btn-link:hover { opacity: 0.75; }
 .btn-link.dark { color: #0a0a0a; }
@@ -871,11 +871,7 @@ body {
   <div class="section-title center">ESPACIOS DISPONIBLES</div>
   <div id="espacios-loading" style="font-family:'Black Han Sans',sans-serif;font-size:16px;color:#0a0a0a;opacity:0.5;text-align:center;margin:20px 0;">Cargando...</div>
   <div id="espacios-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;"></div>
-  <div class="map-placeholder">
-    <span style="font-size:32px;">🗺️</span>
-    <span>Mapa del campus USC</span>
-    <span style="font-size:11px;opacity:0.5;">Universidad Santiago de Cali</span>
-  </div>
+<div id="map" style="width:92%; height:260px; border-radius:12px; border:3px solid #0a0a0a; margin:16px 0;"></div>
   <div class="spacer"></div>
   <button class="btn-link" onclick="go(prevScreen)">ATRÁS</button>
 </div>
@@ -992,7 +988,14 @@ async function go(id) {
 
   // Cargar espacios al entrar a esa pantalla
   if (id === 's-espacios') {
-    cargarEspacios();
+  cargarEspacios();
+
+  const intervalo = setInterval(() => {
+    if (typeof google !== "undefined") {
+      iniciarMap();
+      clearInterval(intervalo);
+    }
+  }, 300);
   }
 
   // Cargar historial del servidor al entrar
@@ -1539,6 +1542,32 @@ document.addEventListener('touchend', function(e) {
   if (now - lastTouchEnd <= 300) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyChhhzprEp2BQG1c7JQsIUH4xXQ5Wsp65w"></script>
+<script>
+function iniciarMap() {
+
+  var coord = { lat: 3.4067, lng: -76.5481 };
+
+  var map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 17,
+    center: coord
+  });
+
+  var marker = new google.maps.Marker({
+    position: coord,
+    map: map
+  });
+
+  map.addListener("click", function(e) {
+    var lat = e.latLng.lat();
+    var lng = e.latLng.lng();
+
+    marker.setPosition(e.latLng);
+
+    console.log("Seleccionaste:", lat, lng);
+  });
+}
 </script>
 </div><!-- /phone-wrap -->
 </body>
