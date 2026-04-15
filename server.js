@@ -12,8 +12,9 @@ const db = require("./config/db");
 const app = express();
 
 // 🔥 Healthcheck (MUY IMPORTANTE - poner arriba)
+const path = require("path");
 app.get("/", (req, res) => {
-  res.status(200).send("OK");
+  res.sendFile(path.join(__dirname, "frontend.html"));
 });
 
 app.use(cors());
