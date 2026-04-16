@@ -447,7 +447,6 @@ body {
   height: auto !important;
   object-fit: cover;
 }
-/* Forzar que el canvas interno también sea responsivo */
 #qr-scanner-region canvas {
   width: 100% !important;
   height: auto !important;
@@ -595,6 +594,16 @@ body {
   line-height: 1.7;
   margin-bottom: 12px;
   border-left: 5px solid #3BB8F5;
+}
+
+/* ── MAPA IFRAME ── */
+.mapa-iframe {
+  width: 100%;
+  height: 500px;
+  border: 3px solid #0a0a0a;
+  border-radius: 12px;
+  margin: 16px 0;
+  background: #0a0a0a;
 }
 </style>
 </head>
@@ -871,7 +880,13 @@ body {
   <div class="section-title center">ESPACIOS DISPONIBLES</div>
   <div id="espacios-loading" style="font-family:'Black Han Sans',sans-serif;font-size:16px;color:#0a0a0a;opacity:0.5;text-align:center;margin:20px 0;">Cargando...</div>
   <div id="espacios-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;"></div>
-<div id="map" style="width:92%; height:260px; border-radius:12px; border:3px solid #0a0a0a; margin:16px 0;"></div>
+  <!-- ✅ MAPA INTERACTIVO DEL PARQUEADERO -->
+  <iframe
+    src="/mapa.html"
+    class="mapa-iframe"
+    frameborder="0"
+    title="Mapa del parqueadero USC">
+  </iframe>
   <div class="spacer"></div>
   <button class="btn-link" onclick="go(prevScreen)">ATRÁS</button>
 </div>
@@ -948,6 +963,7 @@ body {
   <div class="spacer"></div>
   <button class="btn-link" onclick="go('s-login')">ATRÁS</button>
 </div>
+
 <script>
 // ─── CONFIG ─────────────────────────────────────
 const API = 'https://parqueadero-usc-production.up.railway.app/api';
@@ -965,7 +981,6 @@ async function go(id) {
 
   const prev = document.querySelector('.screen.active');
   if (prev) {
-    // Detener scanner si salimos de la pantalla QR
     if (prev.id === 's-qr') await stopQRScanner();
     prevScreen = prev.id;
     prev.classList.remove('active');
@@ -975,12 +990,10 @@ async function go(id) {
   if (next) next.classList.add('active');
   window.scrollTo(0, 0);
 
-  // Arrancar scanner al entrar a la pantalla QR
   if (id === 's-qr') {
     setTimeout(startQRScanner, 400);
   }
 
-  // Actualizar botón de salida al entrar al menú
   if (id === 's-menu') {
     setTimeout(actualizarBotonSalida, 50);
     setTimeout(iniciarTemporizador, 50);
@@ -988,17 +1001,9 @@ async function go(id) {
 
   // Cargar espacios al entrar a esa pantalla
   if (id === 's-espacios') {
-  cargarEspacios();
-
-  const intervalo = setInterval(() => {
-    if (typeof google !== "undefined") {
-      iniciarMap();
-      clearInterval(intervalo);
-    }
-  }, 300);
+    cargarEspacios();
   }
 
-  // Cargar historial del servidor al entrar
   if (id === 's-historial') {
     cargarHistorial();
   }
@@ -1040,7 +1045,6 @@ async function doLogin() {
     localStorage.setItem('pq_token', token);
     localStorage.setItem('pq_usuario', JSON.stringify(usuario));
 
-    // Cargar reservas del servidor (con fallback a local)
     localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
     await cargarHistorial();
 
@@ -1099,7 +1103,7 @@ async function doRegistro() {
 function cerrarSesion() {
   token = null;
   usuario = null;
-  reservas = []; // 🔥 RESET
+  reservas = [];
 
   localStorage.removeItem('pq_token');
   localStorage.removeItem('pq_usuario');
@@ -1128,7 +1132,7 @@ function actualizarInicio() {
   }
 }
 
-// ─── RESERVAS — conectado al backend ────────────────────────
+// ─── RESERVAS ────────────────────────────────────
 async function doReserva(tipo, screen) {
   let placa = '', fecha = '';
 
@@ -1140,28 +1144,29 @@ async function doReserva(tipo, screen) {
   if (!fecha) { alert('Selecciona fecha y hora'); return; }
 
   try {
-  const res = await fetch(API + '/reservas', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
-    },
-    body: JSON.stringify({ tipo, placa, fecha_reserva: fecha })
-  });
+    const res = await fetch(API + '/reservas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ tipo, placa, fecha_reserva: fecha })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok) throw new Error(data.message);
+    if (!res.ok) throw new Error(data.message);
 
-  await cargarHistorial();
+    await cargarHistorial();
 
-  go('s-reserva-ok');
+    go('s-reserva-ok');
 
-} catch (e) {
-  alert(e.message);
+  } catch (e) {
+    alert(e.message);
+  }
 }
-}
-// ─── CARGAR HISTORIAL DESDE EL SERVIDOR ─────────────────────
+
+// ─── CARGAR HISTORIAL ────────────────────────────
 async function cargarHistorial() {
   if (!token) return;
   try {
@@ -1180,7 +1185,7 @@ async function cargarHistorial() {
   renderHistorial(); actualizarBotonSalida(); iniciarTemporizador();
 }
 
-// ─── ESPACIOS DISPONIBLES EN TIEMPO REAL ────────────────────
+// ─── ESPACIOS DISPONIBLES ────────────────────────
 async function cargarEspacios() {
   const grid = document.getElementById('espacios-grid');
   const loading = document.getElementById('espacios-loading');
@@ -1207,7 +1212,7 @@ async function cargarEspacios() {
   }
 }
 
-// ─── TEMPORIZADOR DE RESERVA ACTIVA ─────────────────────────
+// ─── TEMPORIZADOR ────────────────────────────────
 let timerInterval = null;
 
 function iniciarTemporizador() {
@@ -1246,7 +1251,7 @@ function iniciarTemporizador() {
   timerInterval = setInterval(tick, 1000);
 }
 
-// ─── MOSTRAR QR DE RESERVA (entrada) ────────────────────────
+// ─── QR RESERVA ──────────────────────────────────
 function mostrarQRReserva(reserva) {
   document.getElementById('qr-badge-tipo').textContent = reserva.tipo.toUpperCase();
 
@@ -1277,7 +1282,7 @@ function mostrarQRReserva(reserva) {
   new QRCode(container, { text: qrData, width: 200, height: 200, colorDark: '#0a0a0a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
 }
 
-// ─── HISTORIAL ──────────────────────────────────
+// ─── HISTORIAL ───────────────────────────────────
 function renderHistorial() {
   const lista = document.getElementById('historial-lista');
   if (!lista) return;
@@ -1297,7 +1302,7 @@ function renderHistorial() {
   `).join('');
 }
 
-// ─── BOTÓN SALIDA — activar/desactivar según reserva activa ─
+// ─── BOTÓN SALIDA ────────────────────────────────
 function actualizarBotonSalida() {
   const btn = document.getElementById('btn-qr-salida');
   if (!btn) return;
@@ -1315,7 +1320,6 @@ function irAQRSalida() {
   const activa = reservas.find(r => r.estado === 'Activa');
   if (!activa) return;
 
-  // Info card
   const fechaF = activa.fecha
     ? new Date(activa.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
     : '';
@@ -1324,7 +1328,6 @@ function irAQRSalida() {
     (activa.placa && activa.placa !== 'Bici' && activa.placa !== 'S/P' ? ' — ' + activa.placa : '') +
     '<br>📅 ' + fechaF;
 
-  // Generar QR de salida con token de salida único
   const qrSalidaToken = 'SALIDA-' + activa.qrToken;
   const container = document.getElementById('qr-salida-container');
   container.innerHTML = '';
@@ -1350,7 +1353,7 @@ function irAQRSalida() {
   go('s-qr-salida');
 }
 
-// ─── FINALIZAR RESERVA (salida manual) ──────────
+// ─── FINALIZAR RESERVA ───────────────────────────
 function finalizarReserva() {
   const idx = reservas.findIndex(r => r.estado === 'Activa');
   if (idx === -1) return;
@@ -1362,21 +1365,18 @@ function finalizarReserva() {
   renderHistorial();
   actualizarBotonSalida();
 
-  // Feedback y volver al menú
   const container = document.getElementById('qr-salida-container');
   container.innerHTML = '<div style="font-family:\'Black Han Sans\',sans-serif;font-size:18px;color:#14532d;text-align:center;padding:20px;">✓ RESERVA FINALIZADA<br><span style=\'font-size:13px;opacity:0.7;\'>El espacio está disponible</span></div>';
 
   setTimeout(() => go('s-menu'), 2000);
 }
 
-// ─── QR SCANNER (LOGIN) ─────────────────────────
+// ─── QR SCANNER ──────────────────────────────────
 let html5QrScanner = null;
 
 async function solicitarPermisoCamara() {
   try {
-    // Solicitar permiso explícitamente antes de iniciar el escáner
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    // Detener el stream inmediatamente, solo necesitábamos el permiso
     stream.getTracks().forEach(t => t.stop());
     return true;
   } catch (err) {
@@ -1389,14 +1389,12 @@ async function startQRScanner() {
   statusEl.textContent = 'Iniciando cámara...';
   statusEl.className = 'qr-scan-status';
 
-  // Verificar soporte de cámara
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     statusEl.textContent = 'Tu navegador no soporta acceso a la cámara. Usa Chrome o Safari actualizado.';
     statusEl.className = 'qr-scan-status err';
     return;
   }
 
-  // Solicitar permiso primero (mejora experiencia en iOS Safari)
   const permiso = await solicitarPermisoCamara();
   if (!permiso) {
     statusEl.innerHTML = 'Sin permiso de cámara.<br><small>Ve a Configuración > Safari/Chrome > Permisos de cámara y actívalo.</small>';
@@ -1404,7 +1402,6 @@ async function startQRScanner() {
     return;
   }
 
-  // Limpiar instancia previa si existe
   if (html5QrScanner) {
     try { await html5QrScanner.stop(); } catch(e) {}
     html5QrScanner = null;
@@ -1419,18 +1416,14 @@ async function startQRScanner() {
     disableFlip: false
   };
 
-  // En móviles preferir cámara trasera, con fallback a cualquier cámara
   const cameraConstraints = { facingMode: { ideal: 'environment' } };
 
   html5QrScanner.start(
     cameraConstraints,
     config,
-    (decodedText) => {
-      onQRScanned(decodedText);
-    },
-    () => {} // Ignorar errores de frame (normales durante escaneo)
+    (decodedText) => { onQRScanned(decodedText); },
+    () => {}
   ).catch(async (err) => {
-    // Fallback: intentar con cualquier cámara disponible
     try {
       await html5QrScanner.start({ facingMode: 'user' }, config,
         (decodedText) => { onQRScanned(decodedText); },
@@ -1445,15 +1438,10 @@ async function startQRScanner() {
 
 async function stopQRScanner() {
   if (html5QrScanner) {
-    try {
-      await html5QrScanner.stop();
-    } catch(e) {}
-    try {
-      html5QrScanner.clear();
-    } catch(e) {}
+    try { await html5QrScanner.stop(); } catch(e) {}
+    try { html5QrScanner.clear(); } catch(e) {}
     html5QrScanner = null;
   }
-  // Limpiar el contenedor del scanner para que no quede el video residual
   const region = document.getElementById('qr-scanner-region');
   if (region) region.innerHTML = '';
 }
@@ -1470,7 +1458,6 @@ function onQRScanned(texto) {
     return;
   }
 
-  // Buscar reserva en localStorage por token
   const cedula = datos.usuario;
   if (!cedula) {
     statusEl.textContent = 'QR sin usuario. Inicia sesión manual.';
@@ -1488,12 +1475,10 @@ function onQRScanned(texto) {
     return;
   }
 
-  // Buscar datos del usuario en localStorage
   const usuarioGuardado = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
   const tokenGuardado = localStorage.getItem('pq_token');
 
   if (usuarioGuardado && tokenGuardado && String(usuarioGuardado.cedula) === String(cedula)) {
-    // El usuario ya tenía sesión guardada → restaurar
     token = tokenGuardado;
     usuario = usuarioGuardado;
     reservas = reservasGuardadas;
@@ -1506,7 +1491,6 @@ function onQRScanned(texto) {
       actualizarInicio();
     }, 1000);
   } else {
-    // No hay sesión guardada para esa cédula → pedir login manual
     statusEl.textContent = 'QR válido. Por seguridad, confirma tu contraseña.';
     statusEl.className = 'qr-scan-status ok';
     setTimeout(() => {
@@ -1516,11 +1500,10 @@ function onQRScanned(texto) {
   }
 }
 
-// ─── INIT ───────────────────────────────────────
+// ─── INIT ────────────────────────────────────────
 actualizarInicio();
 renderHistorial();
 
-// ENTER LOGIN
 document.getElementById('login-pass').addEventListener('keydown', e => {
   if (e.key==='Enter') doLogin();
 });
@@ -1528,46 +1511,18 @@ document.getElementById('login-doc').addEventListener('keydown', e => {
   if (e.key==='Enter') document.getElementById('login-pass').focus();
 });
 
-// ─── SERVICE WORKER (PWA) ───────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 }
 
-// ─── PREVENIR ZOOM AL HACER DOBLE TAP (iOS) ─────
 let lastTouchEnd = 0;
 document.addEventListener('touchend', function(e) {
   const now = Date.now();
   if (now - lastTouchEnd <= 300) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
-</script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyChhhzprEp2BQG1c7JQsIUH4xXQ5Wsp65w"></script>
-<script>
-function iniciarMap() {
-
-  var coord = { lat: 3.4067, lng: -76.5481 };
-
-  var map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 17,
-    center: coord
-  });
-
-  var marker = new google.maps.Marker({
-    position: coord,
-    map: map
-  });
-
-  map.addListener("click", function(e) {
-    var lat = e.latLng.lat();
-    var lng = e.latLng.lng();
-
-    marker.setPosition(e.latLng);
-
-    console.log("Seleccionaste:", lat, lng);
-  });
-}
 </script>
 </div><!-- /phone-wrap -->
 </body>
