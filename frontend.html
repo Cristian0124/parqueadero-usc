@@ -21,7 +21,17 @@
 html {
   height: -webkit-fill-available;
 }
-
+.espacio {
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
 body {
   font-family: 'Nunito', sans-serif;
   background: #3BB8F5;
@@ -881,12 +891,19 @@ body {
   <div id="espacios-loading" style="font-family:'Black Han Sans',sans-serif;font-size:16px;color:#0a0a0a;opacity:0.5;text-align:center;margin:20px 0;">Cargando...</div>
   <div id="espacios-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;"></div>
   <!-- ✅ MAPA INTERACTIVO DEL PARQUEADERO -->
-  <iframe
-    src="/mapa"
-    class="mapa-iframe"
-    frameborder="0"
-    title="Mapa del parqueadero USC">
-  </iframe>
+<div class="mapa-container">
+
+  <img src="https://maps.googleapis.com/maps/api/staticmap?center=3.4067,-76.5481&zoom=17&size=600x400&key=TU_API_KEY" class="mapa-img">
+
+  <!-- ZONAS -->
+  <div class="zona motos"></div>
+  <div class="zona carros"></div>
+  <div class="zona bicicletas"></div>
+  <div class="zona patinetas"></div>
+
+</div>
+
+<div id="espacios"></div>
   <div class="spacer"></div>
   <button class="btn-link" onclick="go(prevScreen)">ATRÁS</button>
 </div>
