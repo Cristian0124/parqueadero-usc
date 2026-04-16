@@ -32,6 +32,56 @@ html {
   color: white;
   font-weight: bold;
 }
+
+.zona {
+  position: absolute;
+  display: grid;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+/* POSICIONES */
+.zona.motos {
+  top: 8%;
+  left: 5%;
+  grid-template-columns: repeat(20, 1fr);
+}
+
+.zona.carros {
+  top: 35%;
+  left: 10%;
+  grid-template-columns: repeat(20, 1fr);
+}
+
+.zona.bicicletas {
+  top: 10%;
+  right: 10%;
+  grid-template-columns: repeat(10, 1fr);
+}
+
+.zona.patinetas {
+  bottom: 10%;
+  left: 30%;
+  grid-template-columns: repeat(10, 1fr);
+}
+
+/* COLORES */
+.motos .espacio { background: blue; }
+.carros .espacio { background: black; }
+.bicicletas .espacio { background: orange; }
+.patinetas .espacio { background: red; }
+
+/* ESTADOS */
+.ocupado {
+  background: gray !important;
+  pointer-events: none;
+}
+
+.seleccionado {
+  border: 2px solid yellow;
+  transform: scale(1.2);
+}
+}
 body {
   font-family: 'Nunito', sans-serif;
   background: #3BB8F5;
@@ -615,6 +665,15 @@ body {
   margin: 16px 0;
   background: #0a0a0a;
 }
+  .mapa-container {
+
+  position: relative;
+  width: 100%;
+  .mapa-img {
+  width: 100%;
+  display: block;
+}
+}
 </style>
 </head>
 <body>
@@ -893,7 +952,8 @@ body {
   <!-- ✅ MAPA INTERACTIVO DEL PARQUEADERO -->
 <div class="mapa-container">
 
-  <img src="https://maps.googleapis.com/maps/api/staticmap?center=3.4067,-76.5481&zoom=17&size=600x400&key=TU_API_KEY" class="mapa-img">
+  <img src="https://i.imgur.com/8w0PZ7F.png" class="mapa-img">
+  
 
   <!-- ZONAS -->
   <div class="zona motos"></div>
@@ -1015,16 +1075,19 @@ async function go(id) {
     setTimeout(actualizarBotonSalida, 50);
     setTimeout(iniciarTemporizador, 50);
   }
-
   // Cargar espacios al entrar a esa pantalla
-  if (id === 's-espacios') {
-    cargarEspacios();
-  }
+if (id === 's-espacios') {
+  cargarEspacios();
+
+  setTimeout(() => {
+    cargarMapaInteractivo();
+  }, 300);
+}
 
   if (id === 's-historial') {
     cargarHistorial();
   }
-}
+  }
 
 // ─── ALERTAS ────────────────────────────────────
 function showAlert(id, msg, type='err') {
@@ -1033,7 +1096,7 @@ function showAlert(id, msg, type='err') {
   el.textContent = msg;
   el.className = 'alert alert-'+(type==='ok'?'ok':'err')+' show';
   setTimeout(() => el.classList.remove('show'), 4000);
-}
+  }
 
 // ─── LOGIN ──────────────────────────────────────
 async function doLogin() {
@@ -1540,6 +1603,42 @@ document.addEventListener('touchend', function(e) {
   if (now - lastTouchEnd <= 300) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
+
+                                 function generarEspacios(contenedor, cantidad, prefijo) {
+  contenedor.innerHTML = "";
+
+  for (let i = 1; i <= cantidad; i++) {
+    const div = document.createElement("div");
+    div.classList.add("espacio");
+
+    const codigo = prefijo + i;
+    div.textContent = codigo;
+
+    // Simular ocupados
+    if (Math.random() < 0.25) {
+      div.classList.add("ocupado");
+    }
+
+    div.addEventListener("click", () => {
+      document.querySelectorAll(".espacio").forEach(e => e.classList.remove("seleccionado"));
+      div.classList.add("seleccionado");
+
+      console.log("Seleccionaste:", codigo);
+
+      // Guardar selección
+      localStorage.setItem("espacioSeleccionado", codigo);
+    });
+
+    contenedor.appendChild(div);
+  }
+}
+
+function cargarMapaInteractivo() {
+  generarEspacios(document.querySelector(".zona.motos"), 800, "M");
+  generarEspacios(document.querySelector(".zona.carros"), 500, "C");
+  generarEspacios(document.querySelector(".zona.bicicletas"), 200, "B");
+  generarEspacios(document.querySelector(".zona.patinetas"), 150, "P");
+}
 </script>
 </div><!-- /phone-wrap -->
 </body>
