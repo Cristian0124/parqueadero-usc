@@ -13,8 +13,15 @@ const app = express();
 
 // 🔥 Healthcheck (MUY IMPORTANTE - poner arriba)
 const path = require("path");
-app.get('/mapa', (req, res) =>
-  res.sendFile(path.join(__dirname, 'mapa.html')));
+
+// HOME (frontend principal)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend.html"));
+});
+
+// MAPA (nueva vista)
+app.get("/mapa", (req, res) => {
+  res.sendFile(path.join(__dirname, "mapa.html"));
 });
 
 app.use(cors());
