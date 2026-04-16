@@ -705,6 +705,23 @@ body {
   }
 
 }
+  .mapa-container {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  border: 3px solid black;
+  border-radius: 12px;
+  position: relative;
+}
+
+.mapa-inner {
+  transform: scale(1);
+  transform-origin: 0 0;
+  transition: transform 0.2s ease;
+  width: max-content;
+}
+
+  
 }
 </style>
 </head>
@@ -981,8 +998,9 @@ body {
   <div class="section-title center">ESPACIOS DISPONIBLES</div>
   <div id="espacios-loading" style="font-family:'Black Han Sans',sans-serif;font-size:16px;color:#0a0a0a;opacity:0.5;text-align:center;margin:20px 0;">Cargando...</div>
   <div id="espacios-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;"></div>
-  <!-- ✅ MAPA INTERACTIVO DEL PARQUEADERO -->
+ 
 <div class="mapa-container">
+  <div class="mapa-inner" id="mapa-inner">
 
   <img src="https://i.imgur.com/8w0PZ7F.png" class="mapa-img">
   
@@ -994,6 +1012,7 @@ body {
   <div class="zona patinetas"></div>
 
 </div>
+</div> 
 
 <div id="espacios"></div>
   <div class="spacer"></div>
@@ -1670,7 +1689,62 @@ document.addEventListener('touchend', function(e) {
   generarEspacios(document.querySelector(".zona.carros"), esMovil ? 80 : 500, "C");
   generarEspacios(document.querySelector(".zona.bicicletas"), esMovil ? 40 : 200, "B");
   generarEspacios(document.querySelector(".zona.patinetas"), esMovil ? 30 : 150, "P");
+    
 }
+  let escala = 1;
+let posX = 0;
+let posY = 0;
+let isDragging = false;
+let startX, startY;
+
+const mapa = document.getElementById("mapa-inner");
+
+// ZOOM con scroll o gesto
+document.querySelector(".mapa-container").addEventListener("wheel", (e) => {
+  e.preventDefault();
+
+  escala += e.deltaY * -0.001;
+  escala = Math.min(Math.max(0.5, escala), 3);
+
+  mapa.style.transform = `translate(${posX}px, ${posY}px) scale(${escala})`;
+});
+
+// DRAG (mover mapa)
+mapa.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  startX = e.clientX - posX;
+  startY = e.clientY - posY;
+});
+
+document.addEventListener("mousemove", (e) => {
+  if (!isDragging) return;
+  posX = e.clientX - startX;
+  posY = e.clientY - startY;
+  mapa.style.transform = `translate(${posX}px, ${posY}px) scale(${escala})`;
+});
+
+document.addEventListener("mouseup", () => {
+  isDragging = false;
+});
+
+// TOUCH (celular)
+mapa.addEventListener("touchstart", (e) => {
+  isDragging = true;
+  startX = e.touches[0].clientX - posX;
+  startY = e.touches[0].clientY - posY;
+});
+
+mapa.addEventListener("touchmove", (e) => {
+  if (!isDragging) return;
+  posX = e.touches[0].clientX - startX;
+  posY = e.touches[0].clientY - startY;
+  mapa.style.transform = `translate(${posX}px, ${posY}px) scale(${escala})`;
+});
+
+mapa.addEventListener("touchend", () => {
+  isDragging = false;
+});
+  
 </script>
 </div><!-- /phone-wrap -->
 </body>
