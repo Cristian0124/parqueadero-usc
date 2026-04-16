@@ -666,12 +666,44 @@ body {
   background: #0a0a0a;
 }
   .mapa-container {
-
   position: relative;
   width: 100%;
+  max-height: 400px; 
+  overflow: auto;      
+  border: 2px solid black;
+  border-radius: 10px;
+}  
   .mapa-img {
   width: 100%;
   display: block;
+}
+  @media (max-width: 600px) {
+  .espacio {
+  width: 18px;
+  height: 18px;
+  font-size: 7px;
+    }
+}
+
+  /* 📱 AJUSTes tamaño para el celular*/
+@media (max-width: 600px) {
+
+  .zona.motos,
+  .zona.carros {
+    grid-template-columns: repeat(10, 1fr);
+  }
+
+  .zona.bicicletas,
+  .zona.patinetas {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .espacio {
+    width: 18px;
+    height: 18px;
+    font-size: 7px;
+  }
+
 }
 }
 </style>
@@ -1632,12 +1664,12 @@ document.addEventListener('touchend', function(e) {
     contenedor.appendChild(div);
   }
 }
-
-function cargarMapaInteractivo() {
-  generarEspacios(document.querySelector(".zona.motos"), 800, "M");
-  generarEspacios(document.querySelector(".zona.carros"), 500, "C");
-  generarEspacios(document.querySelector(".zona.bicicletas"), 200, "B");
-  generarEspacios(document.querySelector(".zona.patinetas"), 150, "P");
+ const esMovil = window.innerWidth < 600;
+  function cargarMapaInteractivo() {
+  generarEspacios(document.querySelector(".zona.motos"), esMovil ? 100 : 800, "M");
+  generarEspacios(document.querySelector(".zona.carros"), esMovil ? 80 : 500, "C");
+  generarEspacios(document.querySelector(".zona.bicicletas"), esMovil ? 40 : 200, "B");
+  generarEspacios(document.querySelector(".zona.patinetas"), esMovil ? 30 : 150, "P");
 }
 </script>
 </div><!-- /phone-wrap -->
