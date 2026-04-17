@@ -34,34 +34,17 @@ html {
 .zona {
   position: absolute;
   display: grid;
-  gap: 4px;
+  gap: 3px;
   pointer-events: auto;
+  z-index: 2;           /* ← encima de la imagen */
 }
 
 /* POSICIONES */
-.zona.motos {
-  top: 8%;
-  left: 5%;
-  grid-template-columns: repeat(20, 1fr);
-}
-
-.zona.carros {
-  top: 35%;
-  left: 10%;
-  grid-template-columns: repeat(20, 1fr);
-}
-
-.zona.bicicletas {
-  top: 10%;
-  right: 10%;
-  grid-template-columns: repeat(10, 1fr);
-}
-
-.zona.patinetas {
-  bottom: 10%;
-  left: 30%;
-  grid-template-columns: repeat(10, 1fr);
-}
+/* POSICIONES */
+.zona.motos      { top: 5%;  left: 3%;  grid-template-columns: repeat(10, 1fr); width: 40%; }
+.zona.carros     { top: 40%; left: 5%;  grid-template-columns: repeat(8, 1fr);  width: 50%; }
+.zona.bicicletas { top: 5%;  right: 5%; grid-template-columns: repeat(5, 1fr);  width: 20%; }
+.zona.patinetas  { bottom: 8%; left: 25%; grid-template-columns: repeat(6, 1fr); width: 25%; }
 
 /* COLORES */
 .motos .espacio { background: blue; }
@@ -664,10 +647,14 @@ body {
   background: #0a0a0a;
 }
 /*tamaño imagen */
-  .mapa-img {
-  width: 100%;
+.mapa-img {
+  width: 800px;
+  height: 600px;
   display: block;
+  position: absolute;
+  top: 0; left: 0;
 }
+
   @media (max-width: 600px) {
   .espacio {
     width: 6px;
@@ -707,12 +694,9 @@ body {
    
 
 .mapa-inner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform: scale(1);
-  transform-origin: top left;
-  width: max-content;
+  position: relative;  
+  width: 800px;         
+  height: 600px;        
 }
 
   .zoom-controls {
