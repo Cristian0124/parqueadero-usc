@@ -1759,17 +1759,15 @@ mapa.addEventListener("touchmove", (e) => {
 mapa.addEventListener("touchend", () => {
   isDragging = false;
 });
-  let escala = 1;
 
 function zoomIn() {
-  escala += 0.2;
-  document.getElementById("mapa-inner").style.transform = `scale(${escala})`;
+  escala = Math.min(escala + 0.2, 3);
+  mapa.style.transform = `translate(${posX}px, ${posY}px) scale(${escala})`;
 }
 
 function zoomOut() {
-  escala -= 0.2;
-  if (escala < 0.5) escala = 0.5;
-  document.getElementById("mapa-inner").style.transform = `scale(${escala})`;
+  escala = Math.max(escala - 0.2, 0.5);
+  mapa.style.transform = `translate(${posX}px, ${posY}px) scale(${escala})`;
 }
   
 </script>
