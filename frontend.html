@@ -10,8 +10,12 @@
 <meta name="theme-color" content="#3BB8F5"/>
 <meta http-equiv="Permissions-Policy" content="camera=*"/>
 <title>Parqueadero USC</title>
-<link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icon-192.png"/>
+<!-- Asegúrate de que manifest.json esté en la raíz de tu proyecto en Railway -->
+<link rel="manifest" href="/manifest.json"/>
+<!-- Asegúrate de que icon-192.png esté en la raíz de tu proyecto en Railway -->
+<link rel="apple-touch-icon" href="/icon-192.png"/>
+<!-- Asegúrate de que favicon.ico esté en la raíz de tu proyecto en Railway -->
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -244,7 +248,7 @@ body {
   margin-bottom: 20px;
 }
 .historial-box h3 {
-  font-family: 'Black Han Sans', sans-serif;
+  font-family: 'Black Han Han Sans', sans-serif;
   font-size: 24px;
   margin-bottom: 16px;
 }
@@ -335,4 +339,9 @@ body {
   font-size: 32px;
   color: #fff;
 }
-.otp-input
+.otp-input-real {
+  width: 68px; height: 80px;
+  background: #f0f0f0;
+  border: 2.5px solid #ccc;
+  border-radius: 8px;
+  font-size: 32px;
