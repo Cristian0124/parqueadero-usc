@@ -15,22 +15,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 html {
   height: -webkit-fill-available;
 }
+  /*arriba*/
 .espacio {
-  width: 30px;
-  height: 30px;
-  border-radius: 5px;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
+  width: 8px;
+  height: 8px;
+  font-size: 4px;
+  border-radius: 2px;
 }
 
 .zona {
@@ -81,7 +79,7 @@ html {
   border: 2px solid yellow;
   transform: scale(1.2);
 }
-}
+
 body {
   font-family: 'Nunito', sans-serif;
   background: #3BB8F5;
@@ -665,37 +663,29 @@ body {
   margin: 16px 0;
   background: #0a0a0a;
 }
-  .mapa-container {
-  position: relative;
-  width: 100%;
-  max-height: 400px; 
-  overflow: auto;      
-  border: 2px solid black;
-  border-radius: 10px;
-}  
+/*tamaño imagen */
   .mapa-img {
   width: 100%;
   display: block;
 }
   @media (max-width: 600px) {
   .espacio {
-  width: 18px;
-  height: 18px;
-  font-size: 7px;
-    }
+    width: 6px;
+    height: 6px;
+    font-size: 3px;
+  }
 }
 
-  /* 📱 AJUSTes tamaño para el celular*/
+  /*  tamaño para el celular*/
 @media (max-width: 600px) {
-
   .zona.motos,
   .zona.carros {
-    grid-template-columns: repeat(10, 1fr);
+    grid-template-columns: repeat(12, 1fr);
   }
 
   .zona.bicicletas,
   .zona.patinetas {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(8, 1fr);
   }
 
   .espacio {
@@ -708,20 +698,40 @@ body {
   .mapa-container {
   width: 100%;
   height: 300px;
-  overflow: hidden;
+  overflow: auto;
   border: 3px solid black;
   border-radius: 12px;
   position: relative;
-}
+  background: #000;
+  }
+   
 
 .mapa-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
   transform: scale(1);
-  transform-origin: 0 0;
-  transition: transform 0.2s ease;
+  transform-origin: top left;
   width: max-content;
 }
 
-  
+  .zoom-controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.zoom-controls button {
+  background: white;
+  border: none;
+  padding: 8px;
+  margin: 2px;
+  font-size: 18px;
+  border-radius: 5px;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -1000,19 +1010,24 @@ body {
   <div id="espacios-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;"></div>
  
 <div class="mapa-container">
+
+  <!-- zoom de botones -->
+  <div class="zoom-controls">
+  <button onclick="zoomIn()">+</button>
+  <button onclick="zoomOut()">−</button>
+  </div>
+
   <div class="mapa-inner" id="mapa-inner">
 
   <img src="https://i.imgur.com/8w0PZ7F.png" class="mapa-img">
-  
 
-  <!-- ZONAS -->
-  <div class="zona motos"></div>
-  <div class="zona carros"></div>
-  <div class="zona bicicletas"></div>
-  <div class="zona patinetas"></div>
+    <div class="zona motos"></div>
+    <div class="zona carros"></div>
+    <div class="zona bicicletas"></div>
+    <div class="zona patinetas"></div>
 
-</div>
-</div> 
+  </div>
+  </div>
 
 <div id="espacios"></div>
   <div class="spacer"></div>
@@ -1744,6 +1759,18 @@ mapa.addEventListener("touchmove", (e) => {
 mapa.addEventListener("touchend", () => {
   isDragging = false;
 });
+  let escala = 1;
+
+function zoomIn() {
+  escala += 0.2;
+  document.getElementById("mapa-inner").style.transform = `scale(${escala})`;
+}
+
+function zoomOut() {
+  escala -= 0.2;
+  if (escala < 0.5) escala = 0.5;
+  document.getElementById("mapa-inner").style.transform = `scale(${escala})`;
+}
   
 </script>
 </div><!-- /phone-wrap -->
