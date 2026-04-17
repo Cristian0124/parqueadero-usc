@@ -18,42 +18,7 @@
 
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
 html { height: -webkit-fill-available; }
-
-/* ── MAPA ESPACIOS ── */
-.espacio {
-  width: 8px;
-  height: 8px;
-  font-size: 4px;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: transform 0.1s;
-}
-
-.zona {
-  position: absolute;
-  display: grid;
-  gap: 3px;
-  pointer-events: auto;
-  z-index: 2;
-}
-
-/* POSICIONES */
-.zona.motos      { top: 5%;    left: 3%;   grid-template-columns: repeat(10, 1fr); width: 40%; }
-.zona.carros     { top: 40%;   left: 5%;   grid-template-columns: repeat(8, 1fr);  width: 50%; }
-.zona.bicicletas { top: 5%;    right: 5%;  grid-template-columns: repeat(5, 1fr);  width: 20%; }
-.zona.patinetas  { bottom: 8%; left: 25%;  grid-template-columns: repeat(6, 1fr);  width: 25%; }
-
-/* COLORES */
-.motos .espacio      { background: #3b82f6; }
-.carros .espacio     { background: #1f2937; }
-.bicicletas .espacio { background: #f97316; }
-.patinetas .espacio  { background: #ef4444; }
-
-/* ESTADOS */
-.espacio.ocupado    { background: #9ca3af !important; pointer-events: none; cursor: default; }
-.espacio.seleccionado { border: 2px solid yellow; transform: scale(1.2); }
 
 body {
   font-family: 'Nunito', sans-serif;
@@ -467,17 +432,62 @@ body {
   border-left: 5px solid #3BB8F5;
 }
 
-/* ── MAPA CONTAINER ── */
+/* ══════════════════════════════
+   MAPA — NUEVA VERSIÓN
+══════════════════════════════ */
+
+/* Contenedor con header */
+.mapa-wrapper {
+  width: 100%;
+  background: #111;
+  border-radius: 16px;
+  border: 3px solid #0a0a0a;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.mapa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #1a0a8f;
+}
+.mapa-header-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 14px;
+  color: #7bc8ff;
+  letter-spacing: 1px;
+}
+.btn-fullscreen {
+  background: none;
+  border: 2px solid #7bc8ff;
+  border-radius: 6px;
+  color: #7bc8ff;
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  transition: background 0.2s, color 0.2s;
+  touch-action: manipulation;
+  min-height: 32px;
+}
+.btn-fullscreen:hover { background: #7bc8ff; color: #1a0a8f; }
+.btn-fullscreen svg { width: 14px; height: 14px; }
+
 .mapa-container {
   width: 100%;
-  height: 300px;
+  height: 280px;
   overflow: hidden;
-  border: 3px solid #0a0a0a;
-  border-radius: 12px;
   position: relative;
   background: #111;
   touch-action: none;
 }
+
 .mapa-inner {
   position: relative;
   width: 800px;
@@ -487,7 +497,7 @@ body {
   user-select: none;
 }
 .mapa-inner:active { cursor: grabbing; }
-.mapa-img { width: 800px; height: 600px; display: block; position: absolute; top: 0; left: 0; }
+.mapa-img { width: 800px; height: 600px; display: block; position: absolute; top: 0; left: 0; opacity: 0.35; }
 
 .zoom-controls {
   position: absolute;
@@ -513,21 +523,313 @@ body {
 }
 .zoom-controls button:active { background: #eee; }
 
-/* ── LEYENDA MAPA ── */
+/* ── ZONAS EN EL MAPA ── */
+.zona {
+  position: absolute;
+  display: grid;
+  gap: 4px;
+  pointer-events: auto;
+  z-index: 2;
+  transition: opacity 0.3s;
+}
+
+/* Zona visible/activa */
+.zona.activa { opacity: 1; pointer-events: auto; }
+/* Zona oculta (otro vehículo) */
+.zona.inactiva { opacity: 0.08; pointer-events: none; }
+
+/* POSICIONES */
+.zona.motos      { top: 5%;    left: 3%;   grid-template-columns: repeat(10, 1fr); width: 40%; }
+.zona.carros     { top: 40%;   left: 5%;   grid-template-columns: repeat(8, 1fr);  width: 50%; }
+.zona.bicicletas { top: 5%;    right: 5%;  grid-template-columns: repeat(5, 1fr);  width: 20%; }
+.zona.patinetas  { bottom: 8%; left: 25%;  grid-template-columns: repeat(6, 1fr);  width: 25%; }
+
+/* Etiqueta de zona */
+.zona-label {
+  position: absolute;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.9;
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.zona-label.motos-lbl      { top: calc(5% - 14px);  left: 3%;   background: #3b82f6; color: #fff; }
+.zona-label.carros-lbl     { top: calc(40% - 14px); left: 5%;   background: #374151; color: #fff; }
+.zona-label.bicicletas-lbl { top: calc(5% - 14px);  right: 5%;  background: #f97316; color: #fff; }
+.zona-label.patinetas-lbl  { bottom: calc(8% + 50px); left: 25%; background: #ef4444; color: #fff; }
+
+/* ── ESPACIOS ── */
+.espacio {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  position: relative;
+}
+.espacio:hover:not(.ocupado) { transform: scale(1.3); z-index: 10; }
+
+.motos .espacio      { background: #3b82f6; }
+.carros .espacio     { background: #4b5563; }
+.bicicletas .espacio { background: #f97316; }
+.patinetas .espacio  { background: #ef4444; }
+
+.espacio.ocupado    { background: #9ca3af !important; cursor: not-allowed; opacity: 0.5; }
+.espacio.seleccionado {
+  background: #facc15 !important;
+  border: 2px solid #fff;
+  transform: scale(1.4);
+  box-shadow: 0 0 6px rgba(250,204,21,0.8);
+  z-index: 10;
+}
+
+/* ── TOOLTIP ESPACIO ── */
+.espacio-tooltip {
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0a0a0a;
+  color: #fff;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 9px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 50;
+  display: none;
+}
+.espacio:hover .espacio-tooltip { display: block; }
+
+/* ── LEYENDA ── */
 .mapa-leyenda {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 8px 0 12px;
+  margin: 0 0 10px;
   font-size: 11px;
   font-weight: 700;
 }
 .leyenda-item { display: flex; align-items: center; gap: 4px; }
 .leyenda-dot  { width: 10px; height: 10px; border-radius: 2px; }
 
+/* ── SELECCIÓN BANNER ── */
+.seleccion-banner {
+  width: 100%;
+  background: #1a0a8f;
+  border-radius: 12px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+}
+.seleccion-banner.tiene-seleccion { border-color: #facc15; }
+.seleccion-banner-texto {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 14px;
+  color: #7bc8ff;
+  line-height: 1.4;
+}
+.seleccion-banner-num {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 28px;
+  color: #facc15;
+  min-width: 60px;
+  text-align: right;
+}
+
+/* ── BTN CONFIRMAR (deshabilitado si no hay selección) ── */
+.btn-confirmar {
+  background: #1a0a8f;
+  color: #fff;
+  border: 2.5px solid #1a0a8f;
+  border-radius: 50px;
+  padding: 16px 40px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 22px;
+  cursor: pointer;
+  width: 100%;
+  margin: 8px 0;
+  transition: background 0.2s, transform 0.1s, opacity 0.2s;
+  letter-spacing: 0.5px;
+}
+.btn-confirmar:not(.disabled):hover { background: #2a1abf; transform: scale(1.02); }
+.btn-confirmar.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+  background: #555;
+  border-color: #555;
+}
+
+/* ══════════════════════════════
+   PANTALLA COMPLETA DEL MAPA
+══════════════════════════════ */
+.mapa-fullscreen-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #0a0a0a;
+  z-index: 9999;
+  flex-direction: column;
+  animation: fadeIn 0.25s ease;
+}
+.mapa-fullscreen-overlay.visible { display: flex; }
+
+.mapa-fs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #1a0a8f;
+  flex-shrink: 0;
+}
+.mapa-fs-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 18px;
+  color: #fff;
+  letter-spacing: 1px;
+}
+.btn-cerrar-fs {
+  background: none;
+  border: 2px solid #7bc8ff;
+  border-radius: 8px;
+  color: #7bc8ff;
+  cursor: pointer;
+  padding: 6px 14px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  transition: background 0.2s;
+  touch-action: manipulation;
+  min-height: 36px;
+}
+.btn-cerrar-fs:hover { background: #7bc8ff; color: #1a0a8f; }
+
+.mapa-fs-info {
+  padding: 10px 20px;
+  background: #111;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 13px;
+  color: #facc15;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.mapa-fs-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+}
+
+.mapa-fs-inner {
+  position: relative;
+  width: 1200px;
+  height: 900px;
+  transform-origin: top left;
+  cursor: grab;
+  user-select: none;
+}
+.mapa-fs-inner:active { cursor: grabbing; }
+
+.mapa-fs-img {
+  width: 1200px;
+  height: 900px;
+  display: block;
+  position: absolute;
+  top: 0; left: 0;
+  opacity: 0.3;
+}
+
+/* zonas en fullscreen */
+.zona-fs {
+  position: absolute;
+  display: grid;
+  gap: 6px;
+  pointer-events: auto;
+  z-index: 2;
+  transition: opacity 0.3s;
+}
+.zona-fs.activa   { opacity: 1; pointer-events: auto; }
+.zona-fs.inactiva { opacity: 0.07; pointer-events: none; }
+
+.zona-fs.motos      { top: 5%;    left: 3%;   grid-template-columns: repeat(14, 1fr); width: 45%; }
+.zona-fs.carros     { top: 40%;   left: 5%;   grid-template-columns: repeat(10, 1fr); width: 55%; }
+.zona-fs.bicicletas { top: 5%;    right: 3%;  grid-template-columns: repeat(7, 1fr);  width: 22%; }
+.zona-fs.patinetas  { bottom: 5%; left: 20%;  grid-template-columns: repeat(8, 1fr);  width: 30%; }
+
+.espacio-fs {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.espacio-fs:hover:not(.ocupado) { transform: scale(1.3); z-index: 10; }
+.zona-fs.motos .espacio-fs      { background: #3b82f6; }
+.zona-fs.carros .espacio-fs     { background: #4b5563; }
+.zona-fs.bicicletas .espacio-fs { background: #f97316; }
+.zona-fs.patinetas .espacio-fs  { background: #ef4444; }
+.espacio-fs.ocupado    { background: #9ca3af !important; cursor: not-allowed; opacity: 0.4; }
+.espacio-fs.seleccionado {
+  background: #facc15 !important;
+  border: 2.5px solid #fff;
+  transform: scale(1.4);
+  box-shadow: 0 0 10px rgba(250,204,21,0.9);
+  z-index: 20;
+}
+
+.mapa-fs-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 20px;
+  background: #111;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.mapa-fs-leyenda .leyenda-item { display: flex; align-items: center; gap: 5px; }
+.mapa-fs-leyenda .leyenda-dot  { width: 12px; height: 12px; border-radius: 3px; }
+
+.mapa-fs-zoom {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  gap: 5px;
+}
+.mapa-fs-zoom button {
+  background: white;
+  border: none;
+  padding: 10px 14px;
+  font-size: 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  min-width: 42px;
+  min-height: 42px;
+  touch-action: manipulation;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 600px) {
-  .espacio { width: 6px; height: 6px; font-size: 0px; }
+  .espacio { width: 8px; height: 8px; }
 }
 </style>
 </head>
@@ -694,10 +996,10 @@ body {
     <div id="timer-count" class="timer-count">--:--</div>
   </div>
   <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:#0a0a0a;width:100%;margin-bottom:14px;">RESERVAR PUESTO</div>
-  <button class="vehicle-option" onclick="go('s-reserva-carro')"><div class="vehicle-dot"></div> CARRO</button>
-  <button class="vehicle-option" onclick="go('s-reserva-moto')"><div class="vehicle-dot"></div> MOTO</button>
-  <button class="vehicle-option" onclick="go('s-reserva-bici')"><div class="vehicle-dot"></div> BICICLETA</button>
-  <button class="vehicle-option" onclick="go('s-reserva-pat')"><div class="vehicle-dot"></div> PATINETA</button>
+  <button class="vehicle-option" onclick="abrirReserva('Carro')"><div class="vehicle-dot"></div> CARRO</button>
+  <button class="vehicle-option" onclick="abrirReserva('Moto')"><div class="vehicle-dot"></div> MOTO</button>
+  <button class="vehicle-option" onclick="abrirReserva('Bicicleta')"><div class="vehicle-dot"></div> BICICLETA</button>
+  <button class="vehicle-option" onclick="abrirReserva('Patineta')"><div class="vehicle-dot"></div> PATINETA</button>
   <div class="gap"></div>
   <button id="btn-qr-salida" class="btn-salida disabled" onclick="irAQRSalida()">&#9654; QR PARA SALIR</button>
   <div class="gap-sm"></div>
@@ -714,12 +1016,54 @@ body {
   <div id="rc-alert" class="alert alert-err"></div>
   <input id="rc-placa" class="bubble-input" type="text" placeholder="PLACA" style="text-transform:uppercase"/>
   <input id="rc-fecha" class="bubble-input" type="datetime-local"/>
-  <div class="gap"></div>
-  <button class="btn-bubble full" onclick="go('s-espacios')" style="font-size:18px;">PUESTOS DISPONIBLES</button>
-  <div class="gap"></div>
+  <div class="gap-sm"></div>
   <p class="warning-text">¡SI LLEGAS 10 MINUTOS TARDE TU RESERVA SERÁ CANCELADA!</p>
-  <div class="gap"></div>
-  <button class="btn-bubble full" onclick="doReserva('Carro','s-reserva-carro')">CONFIRMAR RESERVA</button>
+  <div class="gap-sm"></div>
+
+  <!-- MAPA ZONA CARRO -->
+  <div class="mapa-wrapper">
+    <div class="mapa-header">
+      <span class="mapa-header-title">🚗 ZONA CARROS — SELECCIONA TU PUESTO</span>
+      <button class="btn-fullscreen" onclick="abrirMapaFullscreen('Carro')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+          <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+        AMPLIAR
+      </button>
+    </div>
+    <div class="mapa-container" id="mapa-container-carro">
+      <div class="zona-label motos-lbl">MOTOS</div>
+      <div class="zona-label carros-lbl">CARROS</div>
+      <div class="zona-label bicicletas-lbl">BICIS</div>
+      <div class="zona-label patinetas-lbl">PATINETAS</div>
+      <div class="zoom-controls">
+        <button onclick="zoomIn(event,'carro')">+</button>
+        <button onclick="zoomOut(event,'carro')">−</button>
+      </div>
+      <div class="mapa-inner" id="mapa-inner-carro">
+        <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27800%27%20height%3D%27600%27%3E%3Crect%20width%3D%27800%27%20height%3D%27600%27%20fill%3D%27%230d0d0d%27/%3E%3Cdefs%3E%3Cpattern%20id%3D%27g%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%3Cpath%20d%3D%27M%2040%200%20L%200%200%200%2040%27%20fill%3D%27none%27%20stroke%3D%27%231e1e3a%27%20stroke-width%3D%271%27/%3E%3C/pattern%3E%3C/defs%3E%3Crect%20width%3D%27800%27%20height%3D%27600%27%20fill%3D%27url%28%23g%29%27/%3E%3C/svg%3E" class="mapa-img" alt="Mapa" draggable="false"/>
+        <div class="zona motos inactiva" id="zona-motos-carro"></div>
+        <div class="zona carros activa" id="zona-carros-carro"></div>
+        <div class="zona bicicletas inactiva" id="zona-bicicletas-carro"></div>
+        <div class="zona patinetas inactiva" id="zona-patinetas-carro"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner selección -->
+  <div class="seleccion-banner" id="banner-carro">
+    <div class="seleccion-banner-texto">PUESTO SELECCIONADO<br><span style="font-size:11px;color:#fff;opacity:0.6;">Toca un espacio en el mapa</span></div>
+    <div class="seleccion-banner-num" id="banner-num-carro">—</div>
+  </div>
+
+  <div class="mapa-leyenda">
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#4b5563"></div> Disponible</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#9ca3af"></div> Ocupado</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#facc15;border:1px solid #999"></div> Seleccionado</div>
+  </div>
+
+  <button id="btn-confirmar-carro" class="btn-confirmar disabled" onclick="doReserva('Carro','s-reserva-carro')">CONFIRMAR RESERVA</button>
   <div class="spacer"></div>
   <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
 </div>
@@ -732,12 +1076,52 @@ body {
   <div id="rm-alert" class="alert alert-err"></div>
   <input id="rm-placa" class="bubble-input" type="text" placeholder="PLACA" style="text-transform:uppercase"/>
   <input id="rm-fecha" class="bubble-input" type="datetime-local"/>
-  <div class="gap"></div>
-  <button class="btn-bubble full" onclick="go('s-espacios')" style="font-size:18px;">PUESTOS DISPONIBLES</button>
-  <div class="gap"></div>
+  <div class="gap-sm"></div>
   <p class="warning-text">¡SI LLEGAS 10 MINUTOS TARDE TU RESERVA SERÁ CANCELADA!</p>
-  <div class="gap"></div>
-  <button class="btn-bubble full" onclick="doReserva('Moto','s-reserva-moto')">CONFIRMAR RESERVA</button>
+  <div class="gap-sm"></div>
+
+  <!-- MAPA ZONA MOTO -->
+  <div class="mapa-wrapper">
+    <div class="mapa-header">
+      <span class="mapa-header-title">🏍️ ZONA MOTOS — SELECCIONA TU PUESTO</span>
+      <button class="btn-fullscreen" onclick="abrirMapaFullscreen('Moto')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+          <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+        AMPLIAR
+      </button>
+    </div>
+    <div class="mapa-container" id="mapa-container-moto">
+      <div class="zona-label motos-lbl">MOTOS</div>
+      <div class="zona-label carros-lbl">CARROS</div>
+      <div class="zona-label bicicletas-lbl">BICIS</div>
+      <div class="zona-label patinetas-lbl">PATINETAS</div>
+      <div class="zoom-controls">
+        <button onclick="zoomIn(event,'moto')">+</button>
+        <button onclick="zoomOut(event,'moto')">−</button>
+      </div>
+      <div class="mapa-inner" id="mapa-inner-moto">src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27800%27%20height%3D%27600%27%3E%3Crect%20width%3D%27800%27%20height%3D%27600%27%20fill%3D%27%230d0d0d%27/%3E%3Cdefs%3E%3Cpattern%20id%3D%27g%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%3Cpath%20d%3D%27M%2040%200%20L%200%200%200%2040%27%20fill%3D%27none%27%20stroke%3D%27%231e1e3a%27%20stroke-width%3D%271%27/%3E%3C/pattern%3E%3C/defs%3E%3Crect%20width%3D%27800%27%20height%3D%27600%27%20fill%3D%27url%28%23g%29%27/%3E%3C/svg%3E"
+        <div class="zona motos activa" id="zona-motos-moto"></div>
+        <div class="zona carros inactiva" id="zona-carros-moto"></div>
+        <div class="zona bicicletas inactiva" id="zona-bicicletas-moto"></div>
+        <div class="zona patinetas inactiva" id="zona-patinetas-moto"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seleccion-banner" id="banner-moto">
+    <div class="seleccion-banner-texto">PUESTO SELECCIONADO<br><span style="font-size:11px;color:#fff;opacity:0.6;">Toca un espacio en el mapa</span></div>
+    <div class="seleccion-banner-num" id="banner-num-moto">—</div>
+  </div>
+
+  <div class="mapa-leyenda">
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#3b82f6"></div> Disponible</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#9ca3af"></div> Ocupado</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#facc15;border:1px solid #999"></div> Seleccionado</div>
+  </div>
+
+  <button id="btn-confirmar-moto" class="btn-confirmar disabled" onclick="doReserva('Moto','s-reserva-moto')">CONFIRMAR RESERVA</button>
   <div class="spacer"></div>
   <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
 </div>
@@ -752,12 +1136,53 @@ body {
   <input id="rb-marca" class="bubble-input" type="text" placeholder="MARCA (SI TIENE)"/>
   <input id="rb-fecha" class="bubble-input" type="datetime-local"/>
   <input id="rb-specs" class="bubble-input" type="text" placeholder="ESPECIFICACIONES"/>
-  <div class="gap"></div>
-  <button class="btn-bubble full" onclick="go('s-espacios')" style="font-size:18px;">PUESTOS DISPONIBLES</button>
-  <div class="gap"></div>
+  <div class="gap-sm"></div>
   <p class="warning-text">¡SI LLEGAS 10 MINUTOS TARDE TU RESERVA SERÁ CANCELADA!</p>
-  <div class="gap"></div>
-  <button class="btn-bubble full" onclick="doReserva('Bicicleta','s-reserva-bici')">CONFIRMAR RESERVA</button>
+  <div class="gap-sm"></div>
+
+  <!-- MAPA ZONA BICI -->
+  <div class="mapa-wrapper">
+    <div class="mapa-header">
+      <span class="mapa-header-title">🚲 ZONA BICICLETAS — SELECCIONA TU PUESTO</span>
+      <button class="btn-fullscreen" onclick="abrirMapaFullscreen('Bicicleta')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+          <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+        AMPLIAR
+      </button>
+    </div>
+    <div class="mapa-container" id="mapa-container-bici">
+      <div class="zona-label motos-lbl">MOTOS</div>
+      <div class="zona-label carros-lbl">CARROS</div>
+      <div class="zona-label bicicletas-lbl">BICIS</div>
+      <div class="zona-label patinetas-lbl">PATINETAS</div>
+      <div class="zoom-controls">
+        <button onclick="zoomIn(event,'bici')">+</button>
+        <button onclick="zoomOut(event,'bici')">−</button>
+      </div>
+      <div class="mapa-inner" id="mapa-inner-bici">
+       src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27800%27%20height%3D%27600%27%3E%3Crect%20width%3D%27800%27%20height%3D%27600%27%20fill%3D%27%230d0d0d%27/%3E%3Cdefs%3E%3Cpattern%20id%3D%27g%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%3Cpath%20d%3D%27M%2040%200%20L%200%200%200%2040%27%20fill%3D%27none%27%20stroke%3D%27%231e1e3a%27%20stroke-width%3D%271%27/%3E%3C/pattern%3E%3C/defs%3E%3Crect%20width%3D%27800%27%20height%3D%27600%27%20fill%3D%27url%28%23g%29%27/%3E%3C/svg%3E"
+        <div class="zona motos inactiva" id="zona-motos-bici"></div>
+        <div class="zona carros inactiva" id="zona-carros-bici"></div>
+        <div class="zona bicicletas activa" id="zona-bicicletas-bici"></div>
+        <div class="zona patinetas inactiva" id="zona-patinetas-bici"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seleccion-banner" id="banner-bici">
+    <div class="seleccion-banner-texto">PUESTO SELECCIONADO<br><span style="font-size:11px;color:#fff;opacity:0.6;">Toca un espacio en el mapa</span></div>
+    <div class="seleccion-banner-num" id="banner-num-bici">—</div>
+  </div>
+
+  <div class="mapa-leyenda">
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#f97316"></div> Disponible</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#9ca3af"></div> Ocupado</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#facc15;border:1px solid #999"></div> Seleccionado</div>
+  </div>
+
+  <button id="btn-confirmar-bici" class="btn-confirmar disabled" onclick="doReserva('Bicicleta','s-reserva-bici')">CONFIRMAR RESERVA</button>
   <div class="spacer"></div>
   <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
 </div>
@@ -776,54 +1201,59 @@ body {
   </select>
   <input id="rp-marca" class="bubble-input" type="text" placeholder="MARCA"/>
   <input id="rp-fecha" class="bubble-input" type="datetime-local"/>
-  <div class="gap"></div>
-  <button class="btn-bubble full" onclick="go('s-espacios')" style="font-size:18px;">PUESTOS DISPONIBLES</button>
-  <div class="gap"></div>
+  <div class="gap-sm"></div>
   <p class="warning-text">¡SI LLEGAS 10 MINUTOS TARDE TU RESERVA SERÁ CANCELADA!</p>
-  <div class="gap"></div>
-  <button class="btn-bubble full" onclick="doReserva('Patineta','s-reserva-pat')">CONFIRMAR RESERVA</button>
+  <div class="gap-sm"></div>
+
+  <!-- MAPA ZONA PATINETA -->
+  <div class="mapa-wrapper">
+    <div class="mapa-header">
+      <span class="mapa-header-title">🛴 ZONA PATINETAS — SELECCIONA TU PUESTO</span>
+      <button class="btn-fullscreen" onclick="abrirMapaFullscreen('Patineta')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+          <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+        AMPLIAR
+      </button>
+    </div>
+    <div class="mapa-container" id="mapa-container-pat">
+      <div class="zona-label motos-lbl">MOTOS</div>
+      <div class="zona-label carros-lbl">CARROS</div>
+      <div class="zona-label bicicletas-lbl">BICIS</div>
+      <div class="zona-label patinetas-lbl">PATINETAS</div>
+      <div class="zoom-controls">
+        <button onclick="zoomIn(event,'pat')">+</button>
+        <button onclick="zoomOut(event,'pat')">−</button>
+      </div>
+      <div class="mapa-inner" id="mapa-inner-pat">
+        src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27800%27%20height%3D%27600%27%3E%3Crect%20width%3D%27800%27%20height%3D%27600%27%20fill%3D%27%230d0d0d%27/%3E%3Cdefs%3E%3Cpattern%20id%3D%27g%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%3Cpath%20d%3D%27M%2040%200%20L%200%200%200%2040%27%20fill%3D%27none%27%20stroke%3D%27%231e1e3a%27%20stroke-width%3D%271%27/%3E%3C/pattern%3E%3C/defs%3E%3Crect%20width%3D%27800%27%20height%3D%27600%27%20fill%3D%27url%28%23g%29%27/%3E%3C/svg%3E"
+        <div class="zona motos inactiva" id="zona-motos-pat"></div>
+        <div class="zona carros inactiva" id="zona-carros-pat"></div>
+        <div class="zona bicicletas inactiva" id="zona-bicicletas-pat"></div>
+        <div class="zona patinetas activa" id="zona-patinetas-pat"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seleccion-banner" id="banner-pat">
+    <div class="seleccion-banner-texto">PUESTO SELECCIONADO<br><span style="font-size:11px;color:#fff;opacity:0.6;">Toca un espacio en el mapa</span></div>
+    <div class="seleccion-banner-num" id="banner-num-pat">—</div>
+  </div>
+
+  <div class="mapa-leyenda">
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#ef4444"></div> Disponible</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#9ca3af"></div> Ocupado</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#facc15;border:1px solid #999"></div> Seleccionado</div>
+  </div>
+
+  <button id="btn-confirmar-pat" class="btn-confirmar disabled" onclick="doReserva('Patineta','s-reserva-pat')">CONFIRMAR RESERVA</button>
   <div class="spacer"></div>
   <button class="btn-link" onclick="go('s-menu')">ATRÁS</button>
 </div>
 
 <!-- ══════════════════════════════
-     SCREEN 12 — ESPACIOS DISPONIBLES
-══════════════════════════════ -->
-<div id="s-espacios" class="screen">
-  <div class="section-title center">ESPACIOS DISPONIBLES</div>
-  <div id="espacios-loading" style="font-family:'Black Han Sans',sans-serif;font-size:16px;color:#0a0a0a;opacity:0.5;text-align:center;margin:20px 0;">Cargando...</div>
-  <div id="espacios-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;"></div>
-
-  <!-- Leyenda -->
-  <div class="mapa-leyenda">
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:#3b82f6"></div> Motos</div>
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:#1f2937"></div> Carros</div>
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:#f97316"></div> Bicicletas</div>
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:#ef4444"></div> Patinetas</div>
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:#9ca3af"></div> Ocupado</div>
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:yellow;border:1px solid #999"></div> Seleccionado</div>
-  </div>
-
-  <div class="mapa-container" id="mapa-container">
-    <div class="zoom-controls">
-      <button onclick="zoomIn(event)">+</button>
-      <button onclick="zoomOut(event)">−</button>
-    </div>
-    <div class="mapa-inner" id="mapa-inner">
-      <img src="https://i.imgur.com/8w0PZ7F.png" class="mapa-img" alt="Mapa parqueadero" draggable="false"/>
-      <div class="zona motos"></div>
-      <div class="zona carros"></div>
-      <div class="zona bicicletas"></div>
-      <div class="zona patinetas"></div>
-    </div>
-  </div>
-
-  <div class="spacer"></div>
-  <button class="btn-link" onclick="go(prevScreen)">ATRÁS</button>
-</div>
-
-<!-- ══════════════════════════════
-     SCREEN 13 — RESERVA OK + QR
+     SCREEN 12 — RESERVA OK + QR
 ══════════════════════════════ -->
 <div id="s-reserva-ok" class="screen">
   <div class="section-title center">¡RESERVA<br>CONFIRMADA!</div>
@@ -840,7 +1270,7 @@ body {
 </div>
 
 <!-- ══════════════════════════════
-     SCREEN 14 — HISTORIAL
+     SCREEN 13 — HISTORIAL
 ══════════════════════════════ -->
 <div id="s-historial" class="screen">
   <div class="section-title center">HISTORIAL</div>
@@ -855,7 +1285,7 @@ body {
 </div>
 
 <!-- ══════════════════════════════
-     SCREEN 15 — QR DE SALIDA
+     SCREEN 14 — QR DE SALIDA
 ══════════════════════════════ -->
 <div id="s-qr-salida" class="screen">
   <div class="section-title center">QR DE<br>SALIDA</div>
@@ -896,7 +1326,39 @@ body {
 </div>
 
 <!-- ══════════════════════════════
-     JAVASCRIPT — ÚNICO BLOQUE LIMPIO
+     OVERLAY — MAPA PANTALLA COMPLETA
+══════════════════════════════ -->
+<div class="mapa-fullscreen-overlay" id="mapa-fs-overlay">
+  <div class="mapa-fs-header">
+    <span class="mapa-fs-title" id="fs-titulo">ZONA — SELECCIONA TU PUESTO</span>
+    <button class="btn-cerrar-fs" onclick="cerrarMapaFullscreen()">✕ CERRAR</button>
+  </div>
+  <div class="mapa-fs-info" id="fs-info">Toca un espacio disponible para seleccionarlo</div>
+  <div class="mapa-fs-body" id="mapa-fs-body">
+    <div class="mapa-fs-inner" id="mapa-fs-inner">
+      <img class="mapa-fs-img" src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%271200%27%20height%3D%27900%27%3E%3Crect%20width%3D%271200%27%20height%3D%27900%27%20fill%3D%27%230d0d0d%27/%3E%3Cdefs%3E%3Cpattern%20id%3D%27g%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%3Cpath%20d%3D%27M%2040%200%20L%200%200%200%2040%27%20fill%3D%27none%27%20stroke%3D%27%231e1e3a%27%20stroke-width%3D%271%27/%3E%3C/pattern%3E%3C/defs%3E%3Crect%20width%3D%271200%27%20height%3D%27900%27%20fill%3D%27url%28%23g%29%27/%3E%3C/svg%3E">
+      <div class="zona-fs motos"      id="fs-zona-motos"></div>
+      <div class="zona-fs carros"     id="fs-zona-carros"></div>
+      <div class="zona-fs bicicletas" id="fs-zona-bicicletas"></div>
+      <div class="zona-fs patinetas"  id="fs-zona-patinetas"></div>
+    </div>
+    <div class="mapa-fs-zoom">
+      <button onclick="fsZoomIn()">+</button>
+      <button onclick="fsZoomOut()">−</button>
+    </div>
+  </div>
+  <div class="mapa-fs-leyenda">
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#3b82f6"></div> Motos</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#4b5563"></div> Carros</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#f97316"></div> Bicis</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#ef4444"></div> Patinetas</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#9ca3af"></div> Ocupado</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#facc15;border:1px solid #666"></div> Seleccionado</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     JAVASCRIPT
 ══════════════════════════════ -->
 <script>
 // ─── CONFIG ─────────────────────────────────────
@@ -905,6 +1367,25 @@ let token   = localStorage.getItem('pq_token') || null;
 let usuario = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
 let prevScreen = 's-menu';
 let reservas   = [];
+
+// Estado global de selección por vehículo
+const seleccion = { Carro: null, Moto: null, Bicicleta: null, Patineta: null };
+
+// Mapa de vehículo → clave de mapa y banner
+const vehiculoConfig = {
+  Carro:     { key: 'carro',  zona: 'carros',     screen: 's-reserva-carro' },
+  Moto:      { key: 'moto',   zona: 'motos',      screen: 's-reserva-moto'  },
+  Bicicleta: { key: 'bici',   zona: 'bicicletas', screen: 's-reserva-bici'  },
+  Patineta:  { key: 'pat',    zona: 'patinetas',  screen: 's-reserva-pat'   }
+};
+
+// ─── MAPA: ESTADO ──────────────────────────────
+const mapaEstado = {};
+
+function getMapaEstado(key) {
+  if (!mapaEstado[key]) mapaEstado[key] = { escala: 1, posX: 0, posY: 0, arrastrando: false, startX: 0, startY: 0, inicializado: false };
+  return mapaEstado[key];
+}
 
 // ─── NAV ────────────────────────────────────────
 async function go(id) {
@@ -922,10 +1403,26 @@ async function go(id) {
   if (next) next.classList.add('active');
   window.scrollTo(0, 0);
 
-  if (id === 's-qr')       setTimeout(startQRScanner, 400);
-  if (id === 's-menu')     { setTimeout(actualizarBotonSalida, 50); setTimeout(iniciarTemporizador, 50); }
-  if (id === 's-espacios') { cargarEspacios(); setTimeout(cargarMapaInteractivo, 300); }
+  if (id === 's-qr')   setTimeout(startQRScanner, 400);
+  if (id === 's-menu') { setTimeout(actualizarBotonSalida, 50); setTimeout(iniciarTemporizador, 50); }
   if (id === 's-historial') cargarHistorial();
+
+  // Inicializar mapa del vehículo
+  const mapasIds = {
+    's-reserva-carro': 'carro',
+    's-reserva-moto':  'moto',
+    's-reserva-bici':  'bici',
+    's-reserva-pat':   'pat'
+  };
+  if (mapasIds[id]) {
+    setTimeout(() => initMapa(mapasIds[id]), 200);
+  }
+}
+
+// ─── ABRIR RESERVA DESDE MENÚ ──────────────────
+function abrirReserva(tipo) {
+  const cfg = vehiculoConfig[tipo];
+  if (cfg) go(cfg.screen);
 }
 
 // ─── ALERTAS ────────────────────────────────────
@@ -935,7 +1432,7 @@ function showAlert(id, msg, type) {
   if (!el) return;
   el.textContent = msg;
   el.className = 'alert alert-' + (type === 'ok' ? 'ok' : 'err') + ' show';
-  setTimeout(function() { el.classList.remove('show'); }, 4000);
+  setTimeout(() => el.classList.remove('show'), 4000);
 }
 
 // ─── OTP HELPER ─────────────────────────────────
@@ -944,6 +1441,308 @@ function otpNext(el, idx) {
     const next = document.getElementById('otp' + (idx + 1));
     if (next) next.focus();
   }
+}
+
+// ─── GENERADOR DE ESPACIOS ─────────────────────
+// Devuelve array de { codigo, ocupado }
+const espaciosData = {};
+
+function generarDatosEspacios(tipo, cantidad, prefijo) {
+  const key = tipo + '_' + prefijo;
+  if (!espaciosData[key]) {
+    espaciosData[key] = Array.from({ length: cantidad }, (_, i) => ({
+      codigo: prefijo + (i + 1),
+      ocupado: Math.random() < 0.3
+    }));
+  }
+  return espaciosData[key];
+}
+
+function crearEspacio(codigo, ocupado, tipoVehiculo, key, isFS) {
+  const div = document.createElement('div');
+  div.classList.add(isFS ? 'espacio-fs' : 'espacio');
+  if (ocupado) {
+    div.classList.add('ocupado');
+    div.title = codigo + ' — Ocupado';
+  } else {
+    div.title = codigo;
+    // Marcar si ya estaba seleccionado
+    if (seleccion[tipoVehiculo] === codigo) div.classList.add('seleccionado');
+
+    div.addEventListener('click', (e) => {
+      e.stopPropagation();
+      seleccionarEspacio(codigo, tipoVehiculo, key, isFS);
+    });
+  }
+  return div;
+}
+
+// ─── INIT MAPA (mini) ──────────────────────────
+function initMapa(key) {
+  const estado = getMapaEstado(key);
+  const inner  = document.getElementById('mapa-inner-' + key);
+  const cont   = document.getElementById('mapa-container-' + key);
+  if (!inner || !cont) return;
+
+  // Mapeo key → tipo vehículo
+  const keyToTipo = { carro: 'Carro', moto: 'Moto', bici: 'Bicicleta', pat: 'Patineta' };
+  const tipo = keyToTipo[key];
+
+  // Zonas y config
+  const zonas = [
+    { id: 'zona-motos-' + key,      tipoZona: 'motos',      prefijo: 'M', count: 60,  activo: tipo === 'Moto'      },
+    { id: 'zona-carros-' + key,     tipoZona: 'carros',     prefijo: 'C', count: 48,  activo: tipo === 'Carro'     },
+    { id: 'zona-bicicletas-' + key, tipoZona: 'bicicletas', prefijo: 'B', count: 25,  activo: tipo === 'Bicicleta' },
+    { id: 'zona-patinetas-' + key,  tipoZona: 'patinetas',  prefijo: 'P', count: 18,  activo: tipo === 'Patineta'  }
+  ];
+
+  zonas.forEach(z => {
+    const el = document.getElementById(z.id);
+    if (!el) return;
+    el.innerHTML = '';
+    const datos = generarDatosEspacios(z.tipoZona, z.count, z.prefijo);
+    datos.forEach(d => el.appendChild(crearEspacio(d.codigo, d.ocupado, tipo, key, false)));
+    el.className = 'zona ' + z.tipoZona + ' ' + (z.activo ? 'activa' : 'inactiva');
+  });
+
+  // Reset posición
+  estado.escala = 1; estado.posX = 0; estado.posY = 0;
+  aplicarTransformMapa(key);
+
+  if (!estado.inicializado) {
+    initMapaControles(key, cont, inner);
+    estado.inicializado = true;
+  }
+}
+
+function aplicarTransformMapa(key) {
+  const e = getMapaEstado(key);
+  const inner = document.getElementById('mapa-inner-' + key);
+  if (inner) inner.style.transform = `translate(${e.posX}px,${e.posY}px) scale(${e.escala})`;
+}
+
+function initMapaControles(key, cont, inner) {
+  const e = getMapaEstado(key);
+  cont.addEventListener('wheel', ev => {
+    ev.preventDefault();
+    e.escala = Math.min(Math.max(0.3, e.escala + ev.deltaY * -0.002), 4);
+    aplicarTransformMapa(key);
+  }, { passive: false });
+
+  inner.addEventListener('mousedown', ev => {
+    e.arrastrando = true;
+    e.startX = ev.clientX - e.posX;
+    e.startY = ev.clientY - e.posY;
+    ev.preventDefault();
+  });
+  document.addEventListener('mousemove', ev => {
+    if (!e.arrastrando) return;
+    e.posX = ev.clientX - e.startX;
+    e.posY = ev.clientY - e.startY;
+    aplicarTransformMapa(key);
+  });
+  document.addEventListener('mouseup', () => { e.arrastrando = false; });
+
+  inner.addEventListener('touchstart', ev => {
+    if (ev.touches.length === 1) {
+      e.arrastrando = true;
+      e.startX = ev.touches[0].clientX - e.posX;
+      e.startY = ev.touches[0].clientY - e.posY;
+    }
+  }, { passive: true });
+  inner.addEventListener('touchmove', ev => {
+    if (!e.arrastrando || ev.touches.length !== 1) return;
+    e.posX = ev.touches[0].clientX - e.startX;
+    e.posY = ev.touches[0].clientY - e.startY;
+    aplicarTransformMapa(key);
+    ev.preventDefault();
+  }, { passive: false });
+  inner.addEventListener('touchend', () => { e.arrastrando = false; });
+}
+
+function zoomIn(ev, key) {
+  if (ev) ev.stopPropagation();
+  const e = getMapaEstado(key);
+  e.escala = Math.min(e.escala + 0.3, 4);
+  aplicarTransformMapa(key);
+}
+function zoomOut(ev, key) {
+  if (ev) ev.stopPropagation();
+  const e = getMapaEstado(key);
+  e.escala = Math.max(e.escala - 0.3, 0.3);
+  aplicarTransformMapa(key);
+}
+
+// ─── SELECCIONAR ESPACIO ────────────────────────
+function seleccionarEspacio(codigo, tipoVehiculo, key, isFS) {
+  // Deseleccionar anterior en ambos mapas (mini y fs)
+  document.querySelectorAll('.espacio.seleccionado, .espacio-fs.seleccionado')
+    .forEach(el => el.classList.remove('seleccionado'));
+
+  // Guardar selección
+  seleccion[tipoVehiculo] = codigo;
+
+  // Marcar en mapa mini
+  if (key) {
+    const inner = document.getElementById('mapa-inner-' + key);
+    if (inner) {
+      inner.querySelectorAll('.espacio').forEach(el => {
+        if (el.title === codigo) el.classList.add('seleccionado');
+      });
+    }
+  }
+
+  // Marcar en mapa fullscreen
+  const fsInner = document.getElementById('mapa-fs-inner');
+  if (fsInner) {
+    fsInner.querySelectorAll('.espacio-fs').forEach(el => {
+      if (el.dataset.codigo === codigo) el.classList.add('seleccionado');
+    });
+  }
+
+  // Actualizar banner
+  const cfgs = {
+    Carro:     { bannerNum: 'banner-num-carro', banner: 'banner-carro', btn: 'btn-confirmar-carro' },
+    Moto:      { bannerNum: 'banner-num-moto',  banner: 'banner-moto',  btn: 'btn-confirmar-moto'  },
+    Bicicleta: { bannerNum: 'banner-num-bici',  banner: 'banner-bici',  btn: 'btn-confirmar-bici'  },
+    Patineta:  { bannerNum: 'banner-num-pat',   banner: 'banner-pat',   btn: 'btn-confirmar-pat'   }
+  };
+  const cfg = cfgs[tipoVehiculo];
+  if (cfg) {
+    const numEl = document.getElementById(cfg.bannerNum);
+    const banEl = document.getElementById(cfg.banner);
+    const btnEl = document.getElementById(cfg.btn);
+    if (numEl) numEl.textContent = codigo;
+    if (banEl) banEl.classList.add('tiene-seleccion');
+    if (btnEl) btnEl.classList.remove('disabled');
+  }
+
+  // Actualizar info en fullscreen
+  const fsInfo = document.getElementById('fs-info');
+  if (fsInfo) fsInfo.textContent = '✓ Puesto seleccionado: ' + codigo + ' — Cierra para confirmar';
+}
+
+// ─── MAPA FULLSCREEN ────────────────────────────
+var fsVehiculo = null;
+var fsEstado = { escala: 1, posX: 0, posY: 0, arrastrando: false, startX: 0, startY: 0, inicializado: false };
+
+function abrirMapaFullscreen(tipoVehiculo) {
+  fsVehiculo = tipoVehiculo;
+  const overlay = document.getElementById('mapa-fs-overlay');
+  overlay.classList.add('visible');
+
+  const titulos = { Carro: '🚗 ZONA CARROS', Moto: '🏍️ ZONA MOTOS', Bicicleta: '🚲 ZONA BICICLETAS', Patineta: '🛴 ZONA PATINETAS' };
+  document.getElementById('fs-titulo').textContent = (titulos[tipoVehiculo] || tipoVehiculo) + ' — SELECCIONA TU PUESTO';
+
+  const sel = seleccion[tipoVehiculo];
+  const fsInfo = document.getElementById('fs-info');
+  fsInfo.textContent = sel ? '✓ Puesto seleccionado: ' + sel + ' — Cierra para confirmar' : 'Toca un espacio disponible para seleccionarlo';
+
+  // Generar zonas fullscreen
+  const zonas = [
+    { id: 'fs-zona-motos',      tipoZona: 'motos',      prefijo: 'M', count: 80,  activo: tipoVehiculo === 'Moto'      },
+    { id: 'fs-zona-carros',     tipoZona: 'carros',     prefijo: 'C', count: 60,  activo: tipoVehiculo === 'Carro'     },
+    { id: 'fs-zona-bicicletas', tipoZona: 'bicicletas', prefijo: 'B', count: 35,  activo: tipoVehiculo === 'Bicicleta' },
+    { id: 'fs-zona-patinetas',  tipoZona: 'patinetas',  prefijo: 'P', count: 24,  activo: tipoVehiculo === 'Patineta'  }
+  ];
+
+  zonas.forEach(z => {
+    const el = document.getElementById(z.id);
+    if (!el) return;
+    el.innerHTML = '';
+    const datos = generarDatosEspacios(z.tipoZona, z.count, z.prefijo);
+    datos.forEach(d => {
+      const div = document.createElement('div');
+      div.classList.add('espacio-fs');
+      div.dataset.codigo = d.codigo;
+      if (d.ocupado) {
+        div.classList.add('ocupado');
+      } else {
+        if (seleccion[tipoVehiculo] === d.codigo) div.classList.add('seleccionado');
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const cfg = vehiculoConfig[tipoVehiculo];
+          seleccionarEspacio(d.codigo, tipoVehiculo, cfg ? cfg.key : null, true);
+        });
+      }
+      el.appendChild(div);
+    });
+    el.className = 'zona-fs ' + z.tipoZona + ' ' + (z.activo ? 'activa' : 'inactiva');
+  });
+
+  // Init controles fs
+  fsEstado.escala = 1; fsEstado.posX = 0; fsEstado.posY = 0;
+  aplicarTransformFS();
+
+  if (!fsEstado.inicializado) {
+    initFSControles();
+    fsEstado.inicializado = true;
+  }
+}
+
+function cerrarMapaFullscreen() {
+  document.getElementById('mapa-fs-overlay').classList.remove('visible');
+  // Re-sincronizar selección en mapa mini
+  if (fsVehiculo) {
+    const cfg = vehiculoConfig[fsVehiculo];
+    if (cfg && seleccion[fsVehiculo]) {
+      const inner = document.getElementById('mapa-inner-' + cfg.key);
+      if (inner) {
+        inner.querySelectorAll('.espacio').forEach(el => {
+          el.classList.toggle('seleccionado', el.title === seleccion[fsVehiculo]);
+        });
+      }
+    }
+  }
+}
+
+function aplicarTransformFS() {
+  const inner = document.getElementById('mapa-fs-inner');
+  if (inner) inner.style.transform = `translate(${fsEstado.posX}px,${fsEstado.posY}px) scale(${fsEstado.escala})`;
+}
+
+function fsZoomIn()  { fsEstado.escala = Math.min(fsEstado.escala + 0.3, 5); aplicarTransformFS(); }
+function fsZoomOut() { fsEstado.escala = Math.max(fsEstado.escala - 0.3, 0.3); aplicarTransformFS(); }
+
+function initFSControles() {
+  const body  = document.getElementById('mapa-fs-body');
+  const inner = document.getElementById('mapa-fs-inner');
+
+  body.addEventListener('wheel', ev => {
+    ev.preventDefault();
+    fsEstado.escala = Math.min(Math.max(0.3, fsEstado.escala + ev.deltaY * -0.002), 5);
+    aplicarTransformFS();
+  }, { passive: false });
+
+  inner.addEventListener('mousedown', ev => {
+    fsEstado.arrastrando = true;
+    fsEstado.startX = ev.clientX - fsEstado.posX;
+    fsEstado.startY = ev.clientY - fsEstado.posY;
+    ev.preventDefault();
+  });
+  document.addEventListener('mousemove', ev => {
+    if (!fsEstado.arrastrando) return;
+    fsEstado.posX = ev.clientX - fsEstado.startX;
+    fsEstado.posY = ev.clientY - fsEstado.startY;
+    aplicarTransformFS();
+  });
+  document.addEventListener('mouseup', () => { fsEstado.arrastrando = false; });
+
+  inner.addEventListener('touchstart', ev => {
+    if (ev.touches.length === 1) {
+      fsEstado.arrastrando = true;
+      fsEstado.startX = ev.touches[0].clientX - fsEstado.posX;
+      fsEstado.startY = ev.touches[0].clientY - fsEstado.posY;
+    }
+  }, { passive: true });
+  inner.addEventListener('touchmove', ev => {
+    if (!fsEstado.arrastrando || ev.touches.length !== 1) return;
+    fsEstado.posX = ev.touches[0].clientX - fsEstado.startX;
+    fsEstado.posY = ev.touches[0].clientY - fsEstado.startY;
+    aplicarTransformFS();
+    ev.preventDefault();
+  }, { passive: false });
+  inner.addEventListener('touchend', () => { fsEstado.arrastrando = false; });
 }
 
 // ─── LOGIN ──────────────────────────────────────
@@ -988,7 +1787,7 @@ async function doRegistro() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
     showAlert('reg-alert', '¡Cuenta creada! Inicia sesión', 'ok');
-    setTimeout(function() { go('s-login'); }, 1500);
+    setTimeout(() => go('s-login'), 1500);
   } catch (e) { showAlert('reg-alert', e.message); }
 }
 
@@ -1008,7 +1807,7 @@ async function doRegistroVisitante() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
     showAlert('vis-alert', '¡Registrado! Inicia sesión', 'ok');
-    setTimeout(function() { go('s-login'); }, 1500);
+    setTimeout(() => go('s-login'), 1500);
   } catch (e) { showAlert('vis-alert', e.message); }
 }
 
@@ -1031,17 +1830,14 @@ async function doRegistroSantiaguino() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
     showAlert('san-alert', '¡Registrado! Confirma tu teléfono', 'ok');
-    setTimeout(function() { go('s-otp'); }, 1200);
+    setTimeout(() => go('s-otp'), 1200);
   } catch (e) { showAlert('san-alert', e.message); }
 }
 
 // ─── OTP VERIFICAR ──────────────────────────────
 function doVerificarOTP() {
-  const codigo = ['otp1','otp2','otp3','otp4'].map(function(id) {
-    return document.getElementById(id).value;
-  }).join('');
+  const codigo = ['otp1','otp2','otp3','otp4'].map(id => document.getElementById(id).value).join('');
   if (codigo.length < 4) { alert('Ingresa los 4 dígitos del código'); return; }
-  // TODO: conectar con backend de verificación
   alert('Código recibido: ' + codigo + '\n(Implementar verificación con el backend)');
   go('s-login');
 }
@@ -1061,7 +1857,6 @@ async function doRecuperar() {
     if (!res.ok) throw new Error(data.message || 'Error al recuperar');
     showAlert('rec-ok', data.message || 'Se envió tu nueva contraseña por SMS', 'ok');
   } catch (e) {
-    // Si el endpoint no existe aún, mostramos mensaje amable
     showAlert('rec-ok', 'Si el número coincide, recibirás un SMS con tu nueva contraseña', 'ok');
   }
 }
@@ -1080,9 +1875,9 @@ function cerrarSesion() {
 // ─── INICIO UI ──────────────────────────────────
 function actualizarInicio() {
   if (!usuario) reservas = [];
-  var saludo    = document.getElementById('inicio-saludo');
-  var sinSesion = document.getElementById('inicio-sin-sesion');
-  var conSesion = document.getElementById('inicio-con-sesion');
+  const saludo    = document.getElementById('inicio-saludo');
+  const sinSesion = document.getElementById('inicio-sin-sesion');
+  const conSesion = document.getElementById('inicio-con-sesion');
   if (token && usuario) {
     saludo.textContent    = 'Bienvenido, ' + (usuario.nombre || 'usuario');
     saludo.style.display  = 'block';
@@ -1097,25 +1892,59 @@ function actualizarInicio() {
 
 // ─── RESERVAS ────────────────────────────────────
 async function doReserva(tipo, screen) {
-  var placa = '', fecha = '';
+  // Verificar que haya puesto seleccionado
+  if (!seleccion[tipo]) {
+    const alertIds = { Carro: 'rc-alert', Moto: 'rm-alert', Bicicleta: 'rb-alert', Patineta: 'rp-alert' };
+    showAlert(alertIds[tipo] || 'rc-alert', 'Selecciona un puesto en el mapa');
+    return;
+  }
+
+  let placa = '', fecha = '';
   if (screen === 's-reserva-carro') { placa = document.getElementById('rc-placa').value; fecha = document.getElementById('rc-fecha').value; }
   if (screen === 's-reserva-moto')  { placa = document.getElementById('rm-placa').value; fecha = document.getElementById('rm-fecha').value; }
   if (screen === 's-reserva-bici')  { placa = 'Bici'; fecha = document.getElementById('rb-fecha').value; }
   if (screen === 's-reserva-pat')   { placa = document.getElementById('rp-placa').value || 'S/P'; fecha = document.getElementById('rp-fecha').value; }
-  if (!fecha) { alert('Selecciona fecha y hora'); return; }
+
+  if (!fecha) { 
+    const alertIds = { Carro: 'rc-alert', Moto: 'rm-alert', Bicicleta: 'rb-alert', Patineta: 'rp-alert' };
+    showAlert(alertIds[tipo] || 'rc-alert', 'Selecciona fecha y hora');
+    return;
+  }
+
+  const puestoSeleccionado = seleccion[tipo];
+
   try {
     const res  = await fetch(API + '/reservas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ tipo: tipo, placa: placa, fecha_reserva: fecha })
+      body: JSON.stringify({ tipo: tipo, placa: placa, fecha_reserva: fecha, puesto: puestoSeleccionado })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
+
+    // Marcar espacio como ocupado localmente
+    const cfg = vehiculoConfig[tipo];
+    if (cfg) {
+      const zonaKey = cfg.zona;
+      const prefMap = { motos: 'M', carros: 'C', bicicletas: 'B', patinetas: 'P' };
+      const prefijo = prefMap[zonaKey];
+      const key = tipo + '_' + prefijo;
+      if (espaciosData[key]) {
+        const esp = espaciosData[key].find(e => e.codigo === puestoSeleccionado);
+        if (esp) esp.ocupado = true;
+      }
+    }
+
+    // Limpiar selección
+    seleccion[tipo] = null;
+
     await cargarHistorial();
-    // Mostrar QR de la reserva recién creada
-    mostrarQRReserva(data);
+    mostrarQRReserva(Object.assign({}, data, { puesto: puestoSeleccionado }));
     go('s-reserva-ok');
-  } catch (e) { alert(e.message); }
+  } catch (e) { 
+    const alertIds = { Carro: 'rc-alert', Moto: 'rm-alert', Bicicleta: 'rb-alert', Patineta: 'rp-alert' };
+    showAlert(alertIds[tipo] || 'rc-alert', e.message);
+  }
 }
 
 // ─── CARGAR HISTORIAL ────────────────────────────
@@ -1125,14 +1954,12 @@ async function cargarHistorial() {
     const res  = await fetch(API + '/reservas', { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) throw new Error();
     const data = await res.json();
-    reservas = data.map(function(r) {
-      return Object.assign({}, r, {
-        estado: r.estado === 'activa' ? 'Activa' : r.estado === 'completada' ? 'Completada' : r.estado,
-        fecha:  r.fecha_reserva,
-        qrToken: r.qr_token,
-        qrSalidaToken: r.qr_salida_token
-      });
-    });
+    reservas = data.map(r => Object.assign({}, r, {
+      estado:        r.estado === 'activa' ? 'Activa' : r.estado === 'completada' ? 'Completada' : r.estado,
+      fecha:         r.fecha_reserva,
+      qrToken:       r.qr_token,
+      qrSalidaToken: r.qr_salida_token
+    }));
     if (usuario) localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
   } catch (e) { /* usa datos locales */ }
   renderHistorial();
@@ -1140,170 +1967,34 @@ async function cargarHistorial() {
   iniciarTemporizador();
 }
 
-// ─── ESPACIOS DISPONIBLES ────────────────────────
-async function cargarEspacios() {
-  const grid    = document.getElementById('espacios-grid');
-  const loading = document.getElementById('espacios-loading');
-  if (!grid) return;
-  grid.innerHTML = '';
-  if (loading) loading.style.display = 'block';
-  const iconos = { Carro: '🚗', Moto: '🏍️', Bicicleta: '🚲', Patineta: '🛴' };
-  try {
-    const res  = await fetch(API + '/reservas/espacios', { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    if (loading) loading.style.display = 'none';
-    data.forEach(function(e) {
-      var lleno = e.disponibles === 0;
-      grid.innerHTML += '<div class="espacio-card ' + (lleno ? 'lleno' : '') + '">' +
-        '<div class="ec-tipo">' + (iconos[e.tipo] || '') + ' ' + e.tipo.toUpperCase() + '</div>' +
-        '<div class="ec-num">' + e.disponibles + '</div>' +
-        '<div class="ec-label">de ' + e.capacidad_total + ' disponibles</div>' +
-        '</div>';
-    });
-  } catch (e) {
-    if (loading) loading.textContent = 'Sin conexión — intenta más tarde';
-  }
-}
-
-// ─── MAPA INTERACTIVO ────────────────────────────
-var mapaEscala  = 1;
-var mapaPosX    = 0;
-var mapaPosY    = 0;
-var mapaArrastrando = false;
-var mapaStartX, mapaStartY;
-
-function aplicarTransformMapa() {
-  var mapa = document.getElementById('mapa-inner');
-  if (mapa) mapa.style.transform = 'translate(' + mapaPosX + 'px, ' + mapaPosY + 'px) scale(' + mapaEscala + ')';
-}
-
-function zoomIn(e) {
-  if (e) e.stopPropagation();
-  mapaEscala = Math.min(mapaEscala + 0.25, 4);
-  aplicarTransformMapa();
-}
-
-function zoomOut(e) {
-  if (e) e.stopPropagation();
-  mapaEscala = Math.max(mapaEscala - 0.25, 0.3);
-  aplicarTransformMapa();
-}
-
-function initMapaControles() {
-  var container = document.getElementById('mapa-container');
-  var mapa      = document.getElementById('mapa-inner');
-  if (!container || !mapa) return;
-
-  // Reset posición al entrar
-  mapaEscala = 1; mapaPosX = 0; mapaPosY = 0;
-  aplicarTransformMapa();
-
-  // Wheel zoom
-  container.addEventListener('wheel', function(e) {
-    e.preventDefault();
-    mapaEscala += e.deltaY * -0.002;
-    mapaEscala  = Math.min(Math.max(0.3, mapaEscala), 4);
-    aplicarTransformMapa();
-  }, { passive: false });
-
-  // Mouse drag
-  mapa.addEventListener('mousedown', function(e) {
-    mapaArrastrando = true;
-    mapaStartX = e.clientX - mapaPosX;
-    mapaStartY = e.clientY - mapaPosY;
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', function(e) {
-    if (!mapaArrastrando) return;
-    mapaPosX = e.clientX - mapaStartX;
-    mapaPosY = e.clientY - mapaStartY;
-    aplicarTransformMapa();
-  });
-  document.addEventListener('mouseup', function() { mapaArrastrando = false; });
-
-  // Touch drag
-  mapa.addEventListener('touchstart', function(e) {
-    if (e.touches.length === 1) {
-      mapaArrastrando = true;
-      mapaStartX = e.touches[0].clientX - mapaPosX;
-      mapaStartY = e.touches[0].clientY - mapaPosY;
-    }
-  }, { passive: true });
-  mapa.addEventListener('touchmove', function(e) {
-    if (!mapaArrastrando || e.touches.length !== 1) return;
-    mapaPosX = e.touches[0].clientX - mapaStartX;
-    mapaPosY = e.touches[0].clientY - mapaStartY;
-    aplicarTransformMapa();
-    e.preventDefault();
-  }, { passive: false });
-  mapa.addEventListener('touchend', function() { mapaArrastrando = false; });
-}
-
-function generarEspacios(contenedor, cantidad, prefijo) {
-  if (!contenedor) return;
-  contenedor.innerHTML = '';
-  for (var i = 1; i <= cantidad; i++) {
-    var div    = document.createElement('div');
-    div.classList.add('espacio');
-    var codigo = prefijo + i;
-    div.title  = codigo;
-    if (Math.random() < 0.25) {
-      div.classList.add('ocupado');
-    }
-    (function(d, c) {
-      d.addEventListener('click', function() {
-        document.querySelectorAll('.espacio').forEach(function(e) { e.classList.remove('seleccionado'); });
-        d.classList.add('seleccionado');
-        localStorage.setItem('espacioSeleccionado', c);
-      });
-    })(div, codigo);
-    contenedor.appendChild(div);
-  }
-}
-
-var mapaInicializado = false;
-function cargarMapaInteractivo() {
-  var esMovil = window.innerWidth < 600;
-  generarEspacios(document.querySelector('.zona.motos'),      esMovil ? 60  : 200, 'M');
-  generarEspacios(document.querySelector('.zona.carros'),     esMovil ? 48  : 160, 'C');
-  generarEspacios(document.querySelector('.zona.bicicletas'), esMovil ? 25  : 80,  'B');
-  generarEspacios(document.querySelector('.zona.patinetas'),  esMovil ? 18  : 60,  'P');
-  if (!mapaInicializado) {
-    initMapaControles();
-    mapaInicializado = true;
-  }
-}
-
 // ─── TEMPORIZADOR ────────────────────────────────
 var timerInterval = null;
 function iniciarTemporizador() {
-  var card    = document.getElementById('timer-card');
-  var countEl = document.getElementById('timer-count');
-  var tipoEl  = document.getElementById('timer-tipo');
+  const card    = document.getElementById('timer-card');
+  const countEl = document.getElementById('timer-count');
+  const tipoEl  = document.getElementById('timer-tipo');
   if (!card) return;
-  var activa = reservas.find(function(r) { return r.estado === 'Activa' || r.estado === 'activa'; });
+  const activa = reservas.find(r => r.estado === 'Activa' || r.estado === 'activa');
   if (!activa) {
     card.classList.remove('visible');
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     return;
   }
-  var fechaObj = new Date(activa.fecha_reserva || activa.fecha);
+  const fechaObj = new Date(activa.fecha_reserva || activa.fecha);
   tipoEl.textContent = activa.tipo;
   card.classList.add('visible');
   if (timerInterval) clearInterval(timerInterval);
   function tick() {
-    var diff    = fechaObj - new Date();
-    var urgente = diff > 0 && diff < 10 * 60 * 1000;
+    const diff = fechaObj - new Date();
     if (diff < 0) {
       countEl.textContent = '+' + Math.floor(Math.abs(diff) / 60000) + ' min';
       countEl.className = 'timer-count urgente';
     } else {
-      var h = Math.floor(diff / 3600000);
-      var m = Math.floor((diff % 3600000) / 60000);
-      var s = Math.floor((diff % 60000) / 1000);
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
       countEl.textContent = (h > 0 ? h + 'h ' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-      countEl.className = 'timer-count' + (urgente ? ' urgente' : '');
+      countEl.className = 'timer-count' + (diff < 10 * 60 * 1000 ? ' urgente' : '');
     }
   }
   tick();
@@ -1314,22 +2005,24 @@ function iniciarTemporizador() {
 function mostrarQRReserva(reserva) {
   if (!reserva) return;
   document.getElementById('qr-badge-tipo').textContent = (reserva.tipo || '').toUpperCase();
-  var fechaF  = (reserva.fecha_reserva || reserva.fecha)
+  const fechaF  = (reserva.fecha_reserva || reserva.fecha)
     ? new Date(reserva.fecha_reserva || reserva.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
     : '';
-  var expiraF = reserva.expira_en
+  const expiraF = reserva.expira_en
     ? new Date(reserva.expira_en).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })
     : '';
   document.getElementById('qr-info-texto').innerHTML =
     (reserva.placa && reserva.placa !== 'Bici' && reserva.placa !== 'S/P' ? '<strong>Placa:</strong> ' + reserva.placa + '<br>' : '') +
+    (reserva.puesto ? '<strong>Puesto:</strong> ' + reserva.puesto + '<br>' : '') +
     '<strong>Fecha:</strong> ' + fechaF + '<br>' +
     (expiraF ? '<span style="color:#c0392b;font-size:12px;">⏱ Vence: ' + expiraF + '</span>' : '');
-  var container = document.getElementById('qr-canvas-container');
+  const container = document.getElementById('qr-canvas-container');
   container.innerHTML = '';
-  var qrData = JSON.stringify({
+  const qrData = JSON.stringify({
     token:    reserva.qr_token || reserva.qrToken,
     tipo:     reserva.tipo,
     placa:    reserva.placa,
+    puesto:   reserva.puesto,
     fecha:    reserva.fecha_reserva || reserva.fecha,
     expira_en: reserva.expira_en,
     usuario:  usuario ? usuario.cedula : 'visitante'
@@ -1339,28 +2032,29 @@ function mostrarQRReserva(reserva) {
 
 // ─── HISTORIAL ───────────────────────────────────
 function renderHistorial() {
-  var lista = document.getElementById('historial-lista');
+  const lista = document.getElementById('historial-lista');
   if (!lista) return;
   if (!reservas.length) {
     lista.innerHTML = '<div class="historial-empty">No hay reservas registradas aún.</div>';
     return;
   }
-  lista.innerHTML = reservas.map(function(r) {
-    return '<div class="historial-item">' +
+  lista.innerHTML = reservas.map(r =>
+    '<div class="historial-item">' +
       '<strong>' + r.tipo + '</strong>' +
       (r.placa && r.placa !== 'Bici' && r.placa !== 'S/P' ? ' — ' + r.placa : '') +
+      (r.puesto ? ' · <strong style="color:#facc15;">Puesto ' + r.puesto + '</strong>' : '') +
       '<span class="estado ' + (r.estado === 'Activa' ? '' : 'salida') + '">' + r.estado + '</span><br>' +
       '📅 ' + (r.fecha ? new Date(r.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '') + '<br>' +
       '<span style="opacity:0.5;font-size:11px;">' + (r.qrToken || '') + '</span>' +
-      '</div>';
-  }).join('');
+    '</div>'
+  ).join('');
 }
 
 // ─── BOTÓN SALIDA ────────────────────────────────
 function actualizarBotonSalida() {
-  var btn    = document.getElementById('btn-qr-salida');
+  const btn = document.getElementById('btn-qr-salida');
   if (!btn) return;
-  var activa = reservas.find(function(r) { return r.estado === 'Activa'; });
+  const activa = reservas.find(r => r.estado === 'Activa');
   if (activa) {
     btn.classList.remove('disabled');
     btn.innerHTML = '&#9654; QR PARA SALIR — ' + activa.tipo.toUpperCase();
@@ -1371,24 +2065,26 @@ function actualizarBotonSalida() {
 }
 
 function irAQRSalida() {
-  var activa = reservas.find(function(r) { return r.estado === 'Activa'; });
+  const activa = reservas.find(r => r.estado === 'Activa');
   if (!activa) return;
-  var fechaF = activa.fecha
+  const fechaF = activa.fecha
     ? new Date(activa.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
     : '';
   document.getElementById('salida-reserva-info').innerHTML =
     '🚗 <strong>' + activa.tipo + '</strong>' +
     (activa.placa && activa.placa !== 'Bici' && activa.placa !== 'S/P' ? ' — ' + activa.placa : '') +
+    (activa.puesto ? ' · <strong style="color:#facc15;">Puesto ' + activa.puesto + '</strong>' : '') +
     '<br>📅 ' + fechaF;
-  var qrSalidaToken = 'SALIDA-' + activa.qrToken;
-  var container     = document.getElementById('qr-salida-container');
+  const qrSalidaToken = 'SALIDA-' + activa.qrToken;
+  const container = document.getElementById('qr-salida-container');
   container.innerHTML = '';
-  var qrData = JSON.stringify({
+  const qrData = JSON.stringify({
     accion: 'salida',
     token:  activa.qrToken,
     tokenSalida: qrSalidaToken,
     tipo:   activa.tipo,
     placa:  activa.placa,
+    puesto: activa.puesto,
     usuario: usuario ? usuario.cedula : 'visitante'
   });
   new QRCode(container, { text: qrData, width: 200, height: 200, colorDark: '#0a0a0a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
@@ -1397,16 +2093,16 @@ function irAQRSalida() {
 
 // ─── FINALIZAR RESERVA ───────────────────────────
 function finalizarReserva() {
-  var idx = reservas.findIndex(function(r) { return r.estado === 'Activa'; });
+  const idx = reservas.findIndex(r => r.estado === 'Activa');
   if (idx === -1) return;
   reservas[idx].estado     = 'Completada';
   reservas[idx].horaSalida = new Date().toISOString();
   if (usuario) localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
   renderHistorial();
   actualizarBotonSalida();
-  var container = document.getElementById('qr-salida-container');
+  const container = document.getElementById('qr-salida-container');
   container.innerHTML = '<div style="font-family:\'Black Han Sans\',sans-serif;font-size:18px;color:#14532d;text-align:center;padding:20px;">✓ RESERVA FINALIZADA<br><span style=\'font-size:13px;opacity:0.7;\'>El espacio está disponible</span></div>';
-  setTimeout(function() { go('s-menu'); }, 2000);
+  setTimeout(() => go('s-menu'), 2000);
 }
 
 // ─── QR SCANNER ──────────────────────────────────
@@ -1414,14 +2110,14 @@ var html5QrScanner = null;
 
 async function solicitarPermisoCamara() {
   try {
-    var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    stream.getTracks().forEach(function(t) { t.stop(); });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    stream.getTracks().forEach(t => t.stop());
     return true;
   } catch (err) { return false; }
 }
 
 async function startQRScanner() {
-  var statusEl = document.getElementById('qr-scan-status');
+  const statusEl = document.getElementById('qr-scan-status');
   statusEl.textContent = 'Iniciando cámara...';
   statusEl.className   = 'qr-scan-status';
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -1429,7 +2125,7 @@ async function startQRScanner() {
     statusEl.className   = 'qr-scan-status err';
     return;
   }
-  var permiso = await solicitarPermisoCamara();
+  const permiso = await solicitarPermisoCamara();
   if (!permiso) {
     statusEl.innerHTML = 'Sin permiso de cámara.<br><small>Actívalo en la configuración de tu navegador.</small>';
     statusEl.className = 'qr-scan-status err';
@@ -1440,14 +2136,14 @@ async function startQRScanner() {
     html5QrScanner = null;
   }
   html5QrScanner = new Html5Qrcode('qr-scanner-region');
-  var config = { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0, disableFlip: false };
+  const config = { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0, disableFlip: false };
   html5QrScanner.start(
     { facingMode: { ideal: 'environment' } }, config,
-    function(txt) { onQRScanned(txt); },
-    function() {}
-  ).catch(async function() {
+    txt => onQRScanned(txt),
+    () => {}
+  ).catch(async () => {
     try {
-      await html5QrScanner.start({ facingMode: 'user' }, config, function(txt) { onQRScanned(txt); }, function() {});
+      await html5QrScanner.start({ facingMode: 'user' }, config, txt => onQRScanned(txt), () => {});
     } catch(e2) {
       statusEl.innerHTML = 'No se pudo acceder a la cámara.<br><small>Verifica permisos.</small>';
       statusEl.className = 'qr-scan-status err';
@@ -1461,47 +2157,47 @@ async function stopQRScanner() {
     try { html5QrScanner.clear(); }       catch(e) {}
     html5QrScanner = null;
   }
-  var region = document.getElementById('qr-scanner-region');
+  const region = document.getElementById('qr-scanner-region');
   if (region) region.innerHTML = '';
 }
 
 function onQRScanned(texto) {
-  var statusEl = document.getElementById('qr-scan-status');
+  const statusEl = document.getElementById('qr-scan-status');
   stopQRScanner();
-  var datos = null;
+  let datos = null;
   try { datos = JSON.parse(texto); } catch(e) {
     statusEl.textContent = 'QR inválido.';
     statusEl.className   = 'qr-scan-status err';
     setTimeout(startQRScanner, 2000);
     return;
   }
-  var cedula = datos.usuario;
+  const cedula = datos.usuario;
   if (!cedula) {
     statusEl.textContent = 'QR sin usuario. Inicia sesión manual.';
     statusEl.className   = 'qr-scan-status err';
     return;
   }
-  var reservasGuardadas  = JSON.parse(localStorage.getItem('pq_reservas_' + cedula) || '[]');
-  var reservaEncontrada  = reservasGuardadas.find(function(r) { return r.qrToken === datos.token; });
+  const reservasGuardadas = JSON.parse(localStorage.getItem('pq_reservas_' + cedula) || '[]');
+  const reservaEncontrada = reservasGuardadas.find(r => r.qrToken === datos.token);
   if (!reservaEncontrada) {
     statusEl.textContent = 'QR no reconocido.';
     statusEl.className   = 'qr-scan-status err';
     setTimeout(startQRScanner, 2500);
     return;
   }
-  var usuarioGuardado = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
-  var tokenGuardado   = localStorage.getItem('pq_token');
+  const usuarioGuardado = JSON.parse(localStorage.getItem('pq_usuario') || 'null');
+  const tokenGuardado   = localStorage.getItem('pq_token');
   if (usuarioGuardado && tokenGuardado && String(usuarioGuardado.cedula) === String(cedula)) {
     token    = tokenGuardado;
     usuario  = usuarioGuardado;
     reservas = reservasGuardadas;
     statusEl.textContent = '✓ Bienvenido, ' + (usuario.nombre || 'usuario');
     statusEl.className   = 'qr-scan-status ok';
-    setTimeout(function() { go('s-menu'); actualizarInicio(); }, 1000);
+    setTimeout(() => { go('s-menu'); actualizarInicio(); }, 1000);
   } else {
     statusEl.textContent = 'QR válido. Confirma tu contraseña.';
     statusEl.className   = 'qr-scan-status ok';
-    setTimeout(function() { document.getElementById('login-doc').value = cedula; go('s-login'); }, 1200);
+    setTimeout(() => { document.getElementById('login-doc').value = cedula; go('s-login'); }, 1200);
   }
 }
 
@@ -1509,17 +2205,11 @@ function onQRScanned(texto) {
 actualizarInicio();
 renderHistorial();
 
-document.getElementById('login-pass').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') doLogin();
-});
-document.getElementById('login-doc').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') document.getElementById('login-pass').focus();
-});
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('login-doc').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('login-pass').focus(); });
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js').catch(function() {});
-  });
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 }
 </script>
 </div><!-- /phone-wrap -->
