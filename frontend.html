@@ -2124,7 +2124,9 @@ function finalizarReserva() {
   actualizarBotonSalida();
   const container = document.getElementById('qr-salida-container');
   container.innerHTML = '<div style="font-family:\'Black Han Sans\',sans-serif;font-size:18px;color:#14532d;text-align:center;padding:20px;">✓ RESERVA FINALIZADA<br><span style=\'font-size:13px;opacity:0.7;\'>El espacio está disponible</span></div>';
-  setTimeout(() => go('s-menu'), 2000);
+  setTimeout(() =>{
+    location.reload();
+  },500);
 }
 
 // ─── QR SCANNER ──────────────────────────────────
