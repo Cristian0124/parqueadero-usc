@@ -216,16 +216,16 @@ exports.cancelarExpiradas = (req, res) => {
       if (err) return res.status(500).json({ message: "Error" });
       res.json({ message: `${result.affectedRows} reservas expiradas canceladas` });
 
+
+    }
+  );
+};
 exports.obtenerPuestosOcupados = (req, res) => {
   db.query(
     "SELECT puesto FROM reservas WHERE estado = 'activa'",
     (err, result) => {
       if (err) return res.status(500).json({ message: "Error" });
       res.json(result);
-    }
-  );
-};
-
 
 
     }

@@ -10,9 +10,11 @@ const reservaRoutes = require("./routes/reservaRoutes");
 const db = require("./config/db");
 
 const app = express();
-
-// 🔥 Healthcheck (MUY IMPORTANTE - poner arriba)
 const path = require("path");
+// Healthcheck 
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
 
 // HOME (frontend principal)
 app.get("/", (req, res) => {
