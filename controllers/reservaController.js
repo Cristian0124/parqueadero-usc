@@ -14,72 +14,88 @@ function calcularExpiracion(fechaReserva) {
   return d;
 }
 
-// ── Crear reserva ──────────────────────────────────────────────────────────
-
+// ── Crear reserva ────────
 exports.crearReserva = (req, res) => {
   const usuario_id = req.userId;
-  const { tipo, placa, fecha_reserva } = req.body;
+  const { tipo, placa, fecha_reserva, puesto } = req.body;
 
-  if (!tipo || !fecha_reserva) {
-    return res.status(400).json({ message: "tipo y fecha_reserva son requeridos" });
+  if (!tipo || !fecha_reserva || !puesto) {
+    return res.status(400).json({ message: "tipo, fecha_reserva y puesto son requeridos" });
   }
 
-  // Verificar que el usuario no tenga ya una reserva activa del mismo tipo
-  db.query(
-    "SELECT id FROM reservas WHERE usuario_id = ? AND estado = 'activa'",
-    [usuario_id],
-    (err, activas) => {
-      if (err) return res.status(500).json({ message: "Error interno" });
+  //verificacion de reserva activa
+db.query(
+  "SELECT id FROM reservas WHERE usuario_id = ? AND estado = 'activa'",
+  [usuario_id],
+  (err, activas) => {
+    if (err) return res.status(500).json({ message: "Error interno" });
       if (activas.length > 0) {
-        return res.status(409).json({ message: "Ya tienes una reserva activa. Finalízala antes de crear otra." });
+      return res.status(409).json({
+      message: "Ya tienes una reserva activa"
+      });
+    }
+
+  // verificacion de puesto
+db.query(
+  "SELECT id FROM reservas WHERE puesto = ? AND estado = 'activa'",
+  [puesto],
+  (err2, ocupados) => {
+    if (err2) return res.status(500).json({ message: "Error interno" });
+      if (ocupados.length > 0) {
+      return res.status(409).json({
+      message: "Este puesto ya está ocupado"
+      });
+    }
+
+  // verificacion de capacidad
+  db.query(
+  `SELECT capacidad_total, 
+  (SELECT COUNT(*) FROM reservas WHERE tipo = ? AND estado = 'activa') AS ocupados
+  FROM espacios WHERE tipo = ? LIMIT 1`,
+  [tipo, tipo],
+  (err3, espacios) => {
+    if (err3) return res.status(500).json({ message: "Error al verificar espacios" });
+    const espacio = espacios[0];
+    if (espacio && espacio.ocupados >= espacio.capacidad_total) {
+      return res.status(409).json({
+      message: "No hay espacios disponibles para " + tipo
+      });
+    }
+
+  //crear reserva
+  const qr_token = generarToken();
+  const qr_salida_token = "SALIDA-" + generarToken();
+  const expira_en = calcularExpiracion(fecha_reserva);
+
+  db.query(
+  `INSERT INTO reservas (usuario_id, tipo, placa, fecha_reserva, puesto, qr_token, qr_salida_token, expira_en, estado)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activa')`,
+  [usuario_id, tipo, placa || null, fecha_reserva, puesto, qr_token, qr_salida_token, expira_en],
+  (err4, result) => {
+    if (err4) return res.status(500).json({ message: "Error al crear reserva" });
+    res.status(201).json({
+      message: "Reserva creada",
+      reserva: {
+      id: result.insertId,
+      tipo,
+      placa: placa || null,
+      fecha_reserva,
+      puesto,
+      qr_token,
+      qr_salida_token,
+      expira_en,
+      estado: "activa"
+     }
+     });
       }
-
-      // Verificar espacios disponibles para ese tipo
-      db.query(
-        `SELECT capacidad_total, 
-                (SELECT COUNT(*) FROM reservas WHERE tipo = ? AND estado = 'activa') AS ocupados
-         FROM espacios WHERE tipo = ? LIMIT 1`,
-        [tipo, tipo],
-        (err2, espacios) => {
-          if (err2) return res.status(500).json({ message: "Error al verificar espacios" });
-
-          const espacio = espacios[0];
-          if (espacio && espacio.ocupados >= espacio.capacidad_total) {
-            return res.status(409).json({ message: "No hay espacios disponibles para " + tipo });
-          }
-
-          const qr_token       = generarToken();
-          const qr_salida_token = "SALIDA-" + generarToken();
-          const expira_en      = calcularExpiracion(fecha_reserva);
-
-          db.query(
-            `INSERT INTO reservas (usuario_id, tipo, placa, fecha_reserva, qr_token, qr_salida_token, expira_en, estado)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'activa')`,
-            [usuario_id, tipo, placa || null, fecha_reserva, qr_token, qr_salida_token, expira_en],
-            (err3, result) => {
-              if (err3) return res.status(500).json({ message: "Error al crear reserva" });
-
-              res.status(201).json({
-                message: "Reserva creada",
-                reserva: {
-                  id: result.insertId,
-                  tipo,
-                  placa: placa || null,
-                  fecha_reserva,
-                  qr_token,
-                  qr_salida_token,
-                  expira_en,
-                  estado: "activa"
-                }
-              });
-            }
+      );
+     }
           );
         }
       );
     }
   );
 };
-
 // ── Obtener reservas del usuario ───────────────────────────────────────────
 
 exports.obtenerReservas = (req, res) => {
@@ -89,19 +105,16 @@ exports.obtenerReservas = (req, res) => {
     `SELECT * FROM reservas WHERE usuario_id = ? ORDER BY fecha_reserva DESC`,
     [usuario_id],
     (err, result) => {
-      if (err) {
-        console.error(err);
-  if (err) {
+if (err) {
   console.error("ERROR REAL:", err);
   return res.status(500).json({ 
     message: "Error al obtener reservas",
     error: err.message
-  });}
-  
-      }
-      res.json(result);
-    }
-  );
+  });
+}
+    res.json(result);
+ }
+);
 };
 
 // ── Validar QR de entrada ──────────────────────────────────────────────────
@@ -202,6 +215,19 @@ exports.cancelarExpiradas = (req, res) => {
     (err, result) => {
       if (err) return res.status(500).json({ message: "Error" });
       res.json({ message: `${result.affectedRows} reservas expiradas canceladas` });
+
+exports.obtenerPuestosOcupados = (req, res) => {
+  db.query(
+    "SELECT puesto FROM reservas WHERE estado = 'activa'",
+    (err, result) => {
+      if (err) return res.status(500).json({ message: "Error" });
+      res.json(result);
+    }
+  );
+};
+
+
+
     }
   );
 };

@@ -29,3 +29,15 @@ CREATE TABLE IF NOT EXISTS parqueos (
   estado VARCHAR(20) NOT NULL DEFAULT 'dentro',
   FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS reservas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NOT NULL,
+  tipo VARCHAR(50) NOT NULL,
+  puesto VARCHAR(20) NOT NULL,
+  estado VARCHAR(20) DEFAULT 'activa',
+  fecha DATETIME,
+  expira_en DATETIME,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
