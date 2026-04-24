@@ -2114,19 +2114,46 @@ function irAQRSalida() {
 }
 
 // ─── FINALIZAR RESERVA ───────────────────────────
-function finalizarReserva() {
-  const idx = reservas.findIndex(r => r.estado === 'Activa');
-  if (idx === -1) return;
-  reservas[idx].estado     = 'Completada';
-  reservas[idx].horaSalida = new Date().toISOString();
-  if (usuario) localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
-  renderHistorial();
-  actualizarBotonSalida();
-  const container = document.getElementById('qr-salida-container');
-  container.innerHTML = '<div style="font-family:\'Black Han Sans\',sans-serif;font-size:18px;color:#14532d;text-align:center;padding:20px;">✓ RESERVA FINALIZADA<br><span style=\'font-size:13px;opacity:0.7;\'>El espacio está disponible</span></div>';
-  setTimeout(() =>{
-    location.reload();
-  },500);
+async function finalizarReserva() {
+  const activa = reservas.find(r => r.estado === 'Activa' || r.estado === 'activa');
+  if (!activa) return;
+
+  try {
+    const res = await fetch(API + '/reservas/' + activa.id + '/cancelar', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      }
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+
+    const idx = reservas.findIndex(r => r.id === activa.id);
+    if (idx !== -1) {
+      reservas[idx].estado = 'Completada';
+      reservas[idx].hora_salida = new Date().toISOString();
+    }
+
+    if (usuario) {
+      localStorage.setItem('pq_reservas_' + usuario.cedula, JSON.stringify(reservas));
+    }
+
+    renderHistorial();
+    actualizarBotonSalida();
+    iniciarTemporizador();
+
+    const container = document.getElementById('qr-salida-container');
+    if (container) {
+      container.innerHTML = '<div style="font-family:\'Black Han Sans\',sans-serif;font-size:18px;color:#14532d;text-align:center;padding:20px;">✓ RESERVA FINALIZADA<br><span style=\'font-size:13px;opacity:0.7;\'>El espacio está disponible</span></div>';
+    }
+
+    setTimeout(() => go('s-menu'), 1500);
+
+  } catch (e) {
+    alert('Error al cancelar: ' + e.message);
+  }
 }
 
 // ─── QR SCANNER ──────────────────────────────────

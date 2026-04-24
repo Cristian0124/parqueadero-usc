@@ -230,4 +230,31 @@ exports.obtenerPuestosOcupados = (req, res) => {
 
     }
   );
+exports.cancelarReserva = (req, res) => {
+  const usuario_id = req.userId;
+  const { id } = req.params;
+
+  db.query(
+    "SELECT * FROM reservas WHERE id = ? AND usuario_id = ?",
+    [id, usuario_id],
+    (err, result) => {
+      if (err) return res.status(500).json({ message: "Error interno" });
+      if (!result.length) return res.status(404).json({ message: "Reserva no encontrada" });
+
+      const reserva = result[0];
+      if (reserva.estado !== "activa") {
+        return res.status(409).json({ message: "La reserva no está activa" });
+      }
+
+      db.query(
+        "UPDATE reservas SET estado = 'completada', hora_salida = NOW() WHERE id = ?",
+        [id],
+        (err2) => {
+          if (err2) return res.status(500).json({ message: "Error al cancelar" });
+          res.json({ message: "Reserva cancelada correctamente" });
+        }
+      );
+    }
+  );
+};
 };

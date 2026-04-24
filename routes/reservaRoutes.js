@@ -15,7 +15,7 @@ router.post("/salida-qr", verifyToken, reserva.registrarSalidaQR);
 // mantenimiento
 router.post("/cancelar-expiradas", reserva.cancelarExpiradas);
 
-// 🔥 NUEVA RUTA (CORRECTA)
+// NUEVA RUTA (CORRECTA)
 router.get("/puestos", reserva.obtenerPuestosOcupados);
-
+router.patch("/:id/cancelar", verifyToken, reserva.cancelarReserva);
 module.exports = router;
