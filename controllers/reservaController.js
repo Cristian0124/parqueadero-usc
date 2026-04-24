@@ -226,10 +226,10 @@ exports.obtenerPuestosOcupados = (req, res) => {
     (err, result) => {
       if (err) return res.status(500).json({ message: "Error" });
       res.json(result);
-
-
     }
   );
+};
+
 exports.cancelarReserva = (req, res) => {
   const usuario_id = req.userId;
   const { id } = req.params;
@@ -256,5 +256,4 @@ exports.cancelarReserva = (req, res) => {
       );
     }
   );
-};
 };
