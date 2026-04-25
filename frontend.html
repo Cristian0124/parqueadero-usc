@@ -1453,7 +1453,7 @@ function generarDatosEspacios(tipo, cantidad, prefijo) {
   if (!espaciosData[key]) {
     espaciosData[key] = Array.from({ length: cantidad }, (_, i) => ({
       codigo: prefijo + (i + 1),
-      ocupado: Math.random() < 0.3
+      ocupado: false
     }));
   }
   return espaciosData[key];
@@ -1464,6 +1464,7 @@ const div = document.createElement('div');
 div.classList.add(isFS ? 'espacio-fs' : 'espacio');
 // clave id para el backend
 div.dataset.id = codigo;
+div.dataset.codigo = codigo;
   if (ocupado) {
     div.classList.add('ocupado');
     div.title = codigo + ' — Ocupado';
@@ -1481,14 +1482,39 @@ div.dataset.id = codigo;
   return div;
 }
 function cargarPuestosOcupados() {
-  fetch("https://parqueadero-usc-production.up.railway.app/api/reservas/puestos")
+  fetch(API + "/reservas/puestos", {
+    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+  })
     .then(res => res.json())
     .then(data => {
-      data.forEach(r => {
-        const el = document.querySelector(`[data-id="${r.puesto}"]`);
-        if (el) {
-          el.classList.add("ocupado");
-          el.style.pointerEvents = "none";
+      const puestosOcupados = data.map(r => r.puesto);
+
+      // Actualizar datos internos
+      Object.keys(espaciosData).forEach(key => {
+        espaciosData[key].forEach(esp => {
+          if (puestosOcupados.includes(esp.codigo)) {
+            esp.ocupado = true;
+          }
+        });
+      });
+
+      // Marcar visualmente en mapa mini
+      document.querySelectorAll('.espacio').forEach(el => {
+        if (puestosOcupados.includes(el.dataset.id)) {
+          el.classList.add('ocupado');
+          el.classList.remove('seleccionado');
+          el.style.pointerEvents = 'none';
+          el.style.cursor = 'not-allowed';
+        }
+      });
+
+      // Marcar visualmente en mapa fullscreen
+      document.querySelectorAll('.espacio-fs').forEach(el => {
+        if (puestosOcupados.includes(el.dataset.codigo)) {
+          el.classList.add('ocupado');
+          el.classList.remove('seleccionado');
+          el.style.pointerEvents = 'none';
+          el.style.cursor = 'not-allowed';
         }
       });
     })
