@@ -1,6 +1,12 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
+const SECRET = process.env.JWT_SECRET;
+
+if (!SECRET) {
+  console.warn("⚠️  verifyToken: JWT_SECRET no configurado. Configúralo en Railway.");
+}
+
 function verifyToken(req, res, next) {
   const authHeader = req.headers["authorization"];
 
@@ -13,11 +19,13 @@ function verifyToken(req, res, next) {
     ? authHeader.slice(7)
     : authHeader;
 
-  jwt.verify(token, process.env.JWT_SECRET || "secreto", (err, decoded) => {
+  jwt.verify(token, SECRET || "secreto_temporal_cambiame", (err, decoded) => {
     if (err) {
-      return res.status(401).json({ message: "Token inválido o expirado" });
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Sesión expirada. Inicia sesión de nuevo." });
+      }
+      return res.status(401).json({ message: "Token inválido" });
     }
-
     req.userId = decoded.id;
     next();
   });

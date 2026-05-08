@@ -259,7 +259,9 @@ body {
   margin-left: 6px;
   font-weight: 800;
 }
-.historial-item .estado.salida { background: #ef4444; }
+.historial-item .estado.salida    { background: #ef4444; }   /* completada */
+.historial-item .estado.cancelada { background: #f97316; }   /* cancelada - naranja */
+.historial-item .estado.expirada  { background: #6b7280; }   /* expirada - gris */
 .historial-empty { text-align: center; opacity: 0.5; margin-top: 60px; font-size: 15px; }
 
 /* ── ALERT ── */
@@ -1824,6 +1826,8 @@ async function doLogin() {
     usuario = data.usuario;
     localStorage.setItem('pq_token', token);
     localStorage.setItem('pq_usuario', JSON.stringify(usuario));
+    // Guardar timestamp de login para saber cuándo expira (8h)
+    localStorage.setItem('pq_login_ts', Date.now().toString());
     await cargarHistorial();
     go('s-inicio');
     actualizarInicio();
@@ -2017,7 +2021,10 @@ async function cargarHistorial() {
     if (!res.ok) throw new Error();
     const data = await res.json();
     reservas = data.map(r => Object.assign({}, r, {
-      estado:        r.estado === 'activa' ? 'Activa' : r.estado === 'completada' ? 'Completada' : r.estado,
+      estado:        r.estado === 'activa' ? 'Activa' :
+                     r.estado === 'completada' ? 'Completada' :
+                     r.estado === 'cancelada' ? 'Cancelada' :
+                     r.estado === 'expirada' ? 'Expirada' : r.estado,
       fecha:         r.fecha_reserva,
       qrToken:       r.qr_token,
       qrSalidaToken: r.qr_salida_token
@@ -2105,7 +2112,11 @@ function renderHistorial() {
       '<strong>' + r.tipo + '</strong>' +
       (r.placa && r.placa !== 'Bici' && r.placa !== 'S/P' ? ' — ' + r.placa : '') +
       (r.puesto ? ' · <strong style="color:#facc15;">Puesto ' + r.puesto + '</strong>' : '') +
-      '<span class="estado ' + (r.estado === 'Activa' ? '' : 'salida') + '">' + r.estado + '</span><br>' +
+      '<span class="estado ' +
+        (r.estado === 'Activa' ? '' :
+         r.estado === 'Cancelada' ? 'cancelada' :
+         r.estado === 'Expirada' ? 'expirada' : 'salida') +
+      '">' + r.estado + '</span><br>' +
       '📅 ' + (r.fecha ? new Date(r.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '') + '<br>' +
       '<span style="opacity:0.5;font-size:11px;">' + (r.qrToken || '') + '</span>' +
     '</div>'

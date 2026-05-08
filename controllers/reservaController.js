@@ -247,7 +247,7 @@ exports.cancelarReserva = (req, res) => {
       }
 
       db.query(
-        "UPDATE reservas SET estado = 'completada', hora_salida = NOW() WHERE id = ?",
+        "UPDATE reservas SET estado = 'cancelada', hora_salida = NOW() WHERE id = ?",
         [id],
         (err2) => {
           if (err2) return res.status(500).json({ message: "Error al cancelar" });
