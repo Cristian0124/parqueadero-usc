@@ -908,6 +908,12 @@ body {
   <p style="font-size:13px;font-weight:800;color:#0a0a0a;text-align:center;letter-spacing:0.5px;margin-bottom:16px;">
     ESCANEA EL QR QUE TE GENERÓ EL PARQUEADERO AL RESERVAR
   </p>
+  <div id="qr-start-btn-wrap" style="width:92%;display:flex;justify-content:center;margin-bottom:14px;">
+    <button id="qr-start-btn" onclick="iniciarCamaraManual()"
+      style="background:#0a0a0a;color:#3BB8F5;font-family:'Black Han Sans',sans-serif;font-size:18px;letter-spacing:1px;border:none;border-radius:30px;padding:14px 36px;cursor:pointer;width:100%;">
+      &#9654; ACTIVAR CÁMARA
+    </button>
+  </div>
   <div style="width:92%;position:relative;">
     <div id="qr-scanner-region"></div>
     <div class="qr-scan-corner tl"></div>
@@ -915,7 +921,7 @@ body {
     <div class="qr-scan-corner bl"></div>
     <div class="qr-scan-corner br"></div>
   </div>
-  <div class="qr-scan-status" id="qr-scan-status">Apunta la cámara al código QR</div>
+  <div class="qr-scan-status" id="qr-scan-status"></div>
   <div class="gap"></div>
   <button class="btn-link small" onclick="stopQRScanner().then(()=>go('s-login'))" style="font-size:16px; color:#4a3cbf;">¿No tienes QR? inicia sesión manual</button>
   <div class="spacer"></div>
@@ -1404,7 +1410,15 @@ async function go(id) {
   if (next) next.classList.add('active');
   window.scrollTo(0, 0);
 
-  if (id === 's-qr')   setTimeout(startQRScanner, 400);
+  if (id === 's-qr') {
+    // Mostrar botón de activar cámara (no iniciar automático — iOS requiere gesto del usuario)
+    const btnWrap = document.getElementById('qr-start-btn-wrap');
+    if (btnWrap) btnWrap.style.display = 'flex';
+    const statusEl = document.getElementById('qr-scan-status');
+    if (statusEl) { statusEl.textContent = ''; statusEl.className = 'qr-scan-status'; }
+    const region = document.getElementById('qr-scanner-region');
+    if (region) region.innerHTML = '';
+  }
   if (id === 's-menu') { setTimeout(actualizarBotonSalida, 50); setTimeout(iniciarTemporizador, 50); }
   if (id === 's-historial') cargarHistorial();
 
@@ -2183,6 +2197,16 @@ async function finalizarReserva() {
 }
 
 // ─── QR SCANNER ──────────────────────────────────
+
+// iOS requiere que la cámara se inicie desde un gesto directo del usuario
+async function iniciarCamaraManual() {
+  // Ocultar el botón y mostrar el escáner
+  const btnWrap = document.getElementById('qr-start-btn-wrap');
+  if (btnWrap) btnWrap.style.display = 'none';
+  const statusEl = document.getElementById('qr-scan-status');
+  if (statusEl) { statusEl.textContent = 'Iniciando cámara...'; statusEl.className = 'qr-scan-status'; }
+  await startQRScanner();
+}
 var html5QrScanner = null;
 
 async function solicitarPermisoCamara() {
@@ -2263,10 +2287,11 @@ async function startQRScanner() {
       statusEl.textContent = 'Apunta la cámara al código QR';
       statusEl.className   = 'qr-scan-status';
     } catch(e2) {
+      const btnWrapErr = document.getElementById('qr-start-btn-wrap');
+      if (btnWrapErr) btnWrapErr.style.display = 'flex';
       statusEl.innerHTML =
         'No se pudo iniciar la cámara.<br>' +
-        '<small>Verifica que el navegador tenga permiso de cámara en Configuración.</small><br>' +
-        '<button onclick="startQRScanner()" style="margin-top:8px;padding:6px 18px;border-radius:20px;border:none;background:#3BB8F5;color:#0a0a0a;font-weight:bold;cursor:pointer;">Reintentar</button>';
+        '<small>Verifica que el navegador tenga permiso de cámara en Configuración.</small>';
       statusEl.className = 'qr-scan-status err';
     }
   }
