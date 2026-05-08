@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -2196,113 +2196,101 @@ async function finalizarReserva() {
   }
 }
 
-// ─── QR SCANNER ──────────────────────────────────
+// ─── QR SCANNER (jsQR + getUserMedia — compatible iOS) ──────────────────────────────────
+var qrVideoStream   = null;
+var qrAnimFrame     = null;
+var qrVideoEl       = null;
+var qrCanvasEl      = null;
+var qrCanvasCtx     = null;
+var qrEscaneando    = false;
 
 // iOS requiere que la cámara se inicie desde un gesto directo del usuario
 async function iniciarCamaraManual() {
-  // Ocultar el botón y mostrar el escáner
   const btnWrap = document.getElementById('qr-start-btn-wrap');
   if (btnWrap) btnWrap.style.display = 'none';
   const statusEl = document.getElementById('qr-scan-status');
   if (statusEl) { statusEl.textContent = 'Iniciando cámara...'; statusEl.className = 'qr-scan-status'; }
   await startQRScanner();
 }
-var html5QrScanner = null;
-
-async function solicitarPermisoCamara() {
-  try {
-    // Solicitar permiso real al navegador — esto dispara el popup de permisos
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    stream.getTracks().forEach(t => t.stop());
-    return { ok: true };
-  } catch (err) {
-    return { ok: false, nombre: err.name, mensaje: err.message };
-  }
-}
 
 async function startQRScanner() {
   const statusEl = document.getElementById('qr-scan-status');
+  const region   = document.getElementById('qr-scanner-region');
   statusEl.textContent = 'Iniciando cámara...';
   statusEl.className   = 'qr-scan-status';
 
-  // Verificar soporte del navegador
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    statusEl.innerHTML = 'Tu navegador no soporta acceso a la cámara.<br><small>Usa Chrome o Safari actualizado.</small>';
+    statusEl.innerHTML = 'Tu navegador no soporta cámara.<br><small>Usa Safari o Chrome actualizado.</small>';
     statusEl.className = 'qr-scan-status err';
     return;
   }
 
-  // Pedir permiso explícito — esto muestra el popup al usuario
-  const resultado = await solicitarPermisoCamara();
-  if (!resultado.ok) {
-    if (resultado.nombre === 'NotAllowedError' || resultado.nombre === 'PermissionDeniedError') {
-      statusEl.innerHTML =
-        'Permiso de cámara denegado.<br>' +
-        '<small>Toca el ícono 🔒 en la barra del navegador y activa la cámara, luego recarga.</small><br>' +
-        '<button onclick="startQRScanner()" style="margin-top:8px;padding:6px 18px;border-radius:20px;border:none;background:#3BB8F5;color:#0a0a0a;font-weight:bold;cursor:pointer;">Reintentar</button>';
-      statusEl.className = 'qr-scan-status err';
-    } else if (resultado.nombre === 'NotFoundError' || resultado.nombre === 'DevicesNotFoundError') {
-      statusEl.innerHTML = 'No se encontró cámara en este dispositivo.';
-      statusEl.className = 'qr-scan-status err';
-    } else if (resultado.nombre === 'NotReadableError' || resultado.nombre === 'TrackStartError') {
-      statusEl.innerHTML =
-        'La cámara está en uso por otra app.<br>' +
-        '<small>Cierra otras apps que usen la cámara y reintenta.</small><br>' +
-        '<button onclick="startQRScanner()" style="margin-top:8px;padding:6px 18px;border-radius:20px;border:none;background:#3BB8F5;color:#0a0a0a;font-weight:bold;cursor:pointer;">Reintentar</button>';
-      statusEl.className = 'qr-scan-status err';
-    } else {
-      statusEl.innerHTML =
-        'No se pudo acceder a la cámara (' + resultado.nombre + ').<br>' +
-        '<button onclick="startQRScanner()" style="margin-top:8px;padding:6px 18px;border-radius:20px;border:none;background:#3BB8F5;color:#0a0a0a;font-weight:bold;cursor:pointer;">Reintentar</button>';
-      statusEl.className = 'qr-scan-status err';
-    }
-    return;
-  }
+  // Detener cualquier stream previo
+  await stopQRScanner();
 
-  if (html5QrScanner) {
-    try { await html5QrScanner.stop(); } catch(e) {}
-    html5QrScanner = null;
-  }
+  // Crear video y canvas en el DOM
+  region.innerHTML = '';
+  qrVideoEl  = document.createElement('video');
+  qrVideoEl.setAttribute('playsinline', '');   // clave en iOS — evita fullscreen
+  qrVideoEl.setAttribute('autoplay', '');
+  qrVideoEl.setAttribute('muted', '');
+  qrVideoEl.style.cssText = 'width:100%;border-radius:13px;display:block;';
 
-  html5QrScanner = new Html5Qrcode('qr-scanner-region');
-  const config = { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0, disableFlip: false };
+  qrCanvasEl  = document.createElement('canvas');
+  qrCanvasEl.style.display = 'none';
+  qrCanvasCtx = qrCanvasEl.getContext('2d');
 
-  // Intentar primero cámara trasera (ideal para móvil)
+  region.appendChild(qrVideoEl);
+  region.appendChild(qrCanvasEl);
+
   try {
-    await html5QrScanner.start(
-      { facingMode: { ideal: 'environment' } }, config,
-      txt => onQRScanned(txt),
-      () => {}
-    );
+    qrVideoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+    qrVideoEl.srcObject = qrVideoStream;
+    await qrVideoEl.play();
+    qrEscaneando = true;
     statusEl.textContent = 'Apunta la cámara al código QR';
     statusEl.className   = 'qr-scan-status';
-  } catch(e1) {
-    // Si falla, intentar cámara frontal
-    try {
-      await html5QrScanner.start(
-        { facingMode: 'user' }, config,
-        txt => onQRScanned(txt),
-        () => {}
-      );
-      statusEl.textContent = 'Apunta la cámara al código QR';
-      statusEl.className   = 'qr-scan-status';
-    } catch(e2) {
-      const btnWrapErr = document.getElementById('qr-start-btn-wrap');
-      if (btnWrapErr) btnWrapErr.style.display = 'flex';
-      statusEl.innerHTML =
-        'No se pudo iniciar la cámara.<br>' +
-        '<small>Verifica que el navegador tenga permiso de cámara en Configuración.</small>';
-      statusEl.className = 'qr-scan-status err';
+    requestAnimationFrame(tickQR);
+  } catch (err) {
+    const btnWrapErr = document.getElementById('qr-start-btn-wrap');
+    if (btnWrapErr) btnWrapErr.style.display = 'flex';
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      statusEl.innerHTML = 'Permiso de cámara denegado.<br><small>Ve a Configuración → Safari/Chrome → Cámara → Permitir.</small>';
+    } else if (err.name === 'NotFoundError') {
+      statusEl.innerHTML = 'No se encontró cámara en este dispositivo.';
+    } else if (err.name === 'NotReadableError') {
+      statusEl.innerHTML = 'La cámara está en uso por otra app.<br><small>Ciérrala y reintenta.</small>';
+    } else {
+      statusEl.innerHTML = 'Error al abrir cámara: ' + err.name + '<br><small>' + err.message + '</small>';
     }
+    statusEl.className = 'qr-scan-status err';
   }
 }
 
-async function stopQRScanner() {
-  if (html5QrScanner) {
-    try { await html5QrScanner.stop(); } catch(e) {}
-    try { html5QrScanner.clear(); }       catch(e) {}
-    html5QrScanner = null;
+function tickQR() {
+  if (!qrEscaneando || !qrVideoEl) return;
+  if (qrVideoEl.readyState === qrVideoEl.HAVE_ENOUGH_DATA) {
+    qrCanvasEl.width  = qrVideoEl.videoWidth;
+    qrCanvasEl.height = qrVideoEl.videoHeight;
+    qrCanvasCtx.drawImage(qrVideoEl, 0, 0, qrCanvasEl.width, qrCanvasEl.height);
+    const imageData = qrCanvasCtx.getImageData(0, 0, qrCanvasEl.width, qrCanvasEl.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+    if (code && code.data) {
+      onQRScanned(code.data);
+      return; // detener el loop al detectar
+    }
   }
+  qrAnimFrame = requestAnimationFrame(tickQR);
+}
+
+async function stopQRScanner() {
+  qrEscaneando = false;
+  if (qrAnimFrame) { cancelAnimationFrame(qrAnimFrame); qrAnimFrame = null; }
+  if (qrVideoStream) { qrVideoStream.getTracks().forEach(t => t.stop()); qrVideoStream = null; }
+  qrVideoEl = null; qrCanvasEl = null; qrCanvasCtx = null;
   const region = document.getElementById('qr-scanner-region');
   if (region) region.innerHTML = '';
 }
