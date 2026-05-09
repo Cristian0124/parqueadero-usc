@@ -2449,31 +2449,74 @@ function onQRScanned(texto) {
   }
 }
 
-  let adminScanner = null;
-function iniciarAdminQR() {
-  const qrRegionId = "admin-qr-reader";
-  adminScanner = new Html5QrcodeScanner(
-    qrRegionId,
-    {
-      fps: 10,
-      qrbox: 250
+  
+async function iniciarAdminQR() {
+  const region = document.getElementById('admin-qr-reader');
+  region.innerHTML = '';
+  const video = document.createElement('video');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('autoplay', '');
+  video.style.width = '100%';
+  video.style.borderRadius = '20px';
+  region.appendChild(video);
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment'
+      },
+      audio: false
+    });
+    video.srcObject = stream;
+    video.play();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    async function scan() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        const imageData = ctx.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+        const code = jsQR(
+          imageData.data,
+          imageData.width,
+          imageData.height
+        );
+        if (code) {
+          document.getElementById(
+            "admin-qr-result"
+          ).innerHTML =   `
+            <div style="
+              background:#d4ffd4;
+              padding:14px;
+              border-radius:18px;
+              border:2px solid #0a0;
+              margin-top:18px;
+            ">
+              QR ESCANEADO<br><br>
+              ${code.data}
+            </div>
+          `;
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+      }
+      requestAnimationFrame(scan);
     }
-  );
-  adminScanner.render(onAdminScanSuccess);
-}
-function onAdminScanSuccess(decodedText) {
-  document.getElementById("admin-qr-result").innerHTML = `  <div style="
-        background:#d4ffd4;
-        padding:14px;
-        border-radius:18px;
-        border:2px solid #0a0;
-      ">
-        QR ESCANEADO CORRECTAMENTE<br><br>
-        ${decodedText}
+    scan();
+  } catch(err) {
+    document.getElementById(
+      "admin-qr-result"
+    ).innerHTML =
+    `
+      <div style="color:red;font-weight:bold;">
+        Error cámara: ${err.message}
       </div>
     `;
-  if (adminScanner) {
-    adminScanner.clear();
   }
 }
 
