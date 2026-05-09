@@ -1061,6 +1061,40 @@ onclick="go('s-admin-login')">
   <button class="btn-link" onclick="cerrarSesion()">CERRAR SESIÓN</button>
 </div>
 
+  <!-- panel para el administrador -->
+  <div id="s-admin-panel" class="screen">
+  <div class="big-title">
+    PANEL ADMIN
+  </div>
+  <div class="sub-title">
+    ESCANEAR QR DE RESERVAS
+  </div>
+  <div class="gap"></div>
+  <div id="admin-qr-reader"
+    style="
+      width:90%;
+      margin:auto;
+      border-radius:20px;
+      overflow:hidden;
+    ">
+  </div>
+  <div class="gap"></div>
+  <div id="admin-qr-result"
+    style="
+      text-align:center;
+      font-weight:bold;
+      color:#0a0a0a;
+      font-size:18px;
+    ">
+  </div>
+  <div class="spacer">
+  </div>
+  <button class="btn-link"
+    onclick="go('s-inicio')">
+    CERRAR PANEL
+  </button>
+</div>
+
 <!-- ══════════════════════════════
      SCREEN 8 — RESERVA CARRO
 ══════════════════════════════ -->
