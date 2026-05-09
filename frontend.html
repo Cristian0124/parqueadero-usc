@@ -1878,7 +1878,24 @@ async function doLogin() {
     actualizarInicio();
   } catch (e) { showAlert('login-alert', e.message); }
 }
+  
+function loginAdmin() {
+  const user =
+    document.getElementById("admin-user").value;
+  const pass =
+    document.getElementById("admin-pass").value;
+  if (user === "ADMIN" && pass === "0987") {
+    go("s-admin-panel");
+  } else {
+    document.getElementById("admin-error").innerText =
+      "USUARIO O CONTRASEÑA INCORRECTOS";
+  }
+}
 
+
+
+
+  
 // ─── REGISTRO ───────────────────────────────────
 async function doRegistro() {
   const doc = document.getElementById('reg-doc').value.trim();
