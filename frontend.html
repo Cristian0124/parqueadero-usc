@@ -890,6 +890,43 @@ onclick="go('s-admin-login')">
   <div class="spacer"></div>
   <button class="btn-link" onclick="go('s-inicio')">ATRÁS</button>
 </div>
+  <!-- login para ingreso de administrador -->
+  <div id="s-admin-login" class="screen">
+  <div class="big-title">ADMIN</div>
+  <div class="gap"></div>
+    <input
+    type="text"
+    id="admin-user"
+    class="bubble-input"
+    placeholder="USUARIO"
+  >
+  <div class="gap"></div>
+  <input
+    type="password"
+    id="admin-pass"
+    class="bubble-input"
+    placeholder="CONTRASEÑA"
+    > 
+    <div class="gap"></div>
+  <button class="btn-bubble full"
+    onclick="loginAdmin()">
+    INGRESAR
+  </button>
+  <div
+    id="admin-error"
+    style="
+      color:red;
+      font-weight:bold;
+      text-align:center;
+      margin-top:16px;
+    ">
+  </div>
+  <div class="gap"></div>
+ <button class="btn-link"
+  onclick="go('s-inicio')">
+  ATRÁS
+ </button>
+</div>
 
 <!-- ══════════════════════════════
      SCREEN — REGISTRO
