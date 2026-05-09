@@ -2442,6 +2442,36 @@ function onQRScanned(texto) {
   }
 }
 
+  let adminScanner = null;
+function iniciarAdminQR() {
+  const qrRegionId = "admin-qr-reader";
+  adminScanner = new Html5QrcodeScanner(
+    qrRegionId,
+    {
+      fps: 10,
+      qrbox: 250
+    }
+  );
+  adminScanner.render(onAdminScanSuccess);
+}
+function onAdminScanSuccess(decodedText) {
+  document.getElementById("admin-qr-result").innerHTML = `  <div style="
+        background:#d4ffd4;
+        padding:14px;
+        border-radius:18px;
+        border:2px solid #0a0;
+      ">
+        QR ESCANEADO CORRECTAMENTE<br><br>
+        ${decodedText}
+      </div>
+    `;
+  if (adminScanner) {
+    adminScanner.clear();
+  }
+}
+
+  
+
 // ─── INIT ────────────────────────────────────────
 actualizarInicio();
 renderHistorial();
