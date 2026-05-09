@@ -1500,6 +1500,11 @@ async function go(id) {
     const region = document.getElementById('qr-scanner-region');
     if (region) region.innerHTML = '';
   }
+
+  if (id === 's-admin-panel') {
+  setTimeout(iniciarAdminQR, 300);
+  }
+  
   if (id === 's-menu') { setTimeout(actualizarBotonSalida, 50); setTimeout(iniciarTemporizador, 50); }
   if (id === 's-historial') cargarHistorial();
 
@@ -1514,6 +1519,8 @@ async function go(id) {
     setTimeout(() => initMapa(mapasIds[id]), 200);
   }
 }
+
+  
 
 // ─── ABRIR RESERVA DESDE MENÚ ──────────────────
 function abrirReserva(tipo) {
