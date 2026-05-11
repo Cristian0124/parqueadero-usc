@@ -1,39 +1,30 @@
 const mysql = require("mysql2");
 require("dotenv").config();
 
-const isRailway = !!process.env.DATABASE_URL;
+const pool = mysql.createPool({
+  host: process.env.MYSQLHOST || process.env.DB_HOST || "localhost",
+  port: process.env.MYSQLPORT || process.env.DB_PORT || 3306,
+  user: process.env.MYSQLUSER || process.env.DB_USER || "root",
+  password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || "",
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME || "parqueadero_usc",
 
-const pool = isRailway
-  ? (() => {
-      const url = new URL(process.env.DATABASE_URL);
-
-      return mysql.createPool({
-        host: url.hostname,
-        port: url.port,
-        user: url.username,
-        password: url.password,
-        database: url.pathname.replace("/", ""),
-        ssl: { rejectUnauthorized: false },
-        waitForConnections: true,
-        connectionLimit: 10,
-      });
-    })()
-  : mysql.createPool({
-      host: process.env.DB_HOST || "localhost",
-      port: process.env.DB_PORT || 3306,
-      user: process.env.DB_USER || "root",
-      password: process.env.DB_PASSWORD || "",
-      database: process.env.DB_NAME || "parqueadero_usc",
-      waitForConnections: true,
-      connectionLimit: 10,
-    });
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 
 pool.getConnection((err, connection) => {
+
   if (err) {
-    console.error("Error conectando a la base de datos:", err.message);
-    process.exit(1);
+    console.error(
+      "Error conectando a la base de datos:",
+      err.message
+    );
+    return;
   }
-  console.log(`Base de datos conectada ${isRailway ? "(Railway)" : "(local)"}`);
+
+  console.log("Base de datos conectada");
+
   connection.release();
 });
 
