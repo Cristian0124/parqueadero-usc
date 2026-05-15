@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0a0a0a"/>
+<title>Admin — Parqueadero USC</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #0a0a0a;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  color: #f0f0f0;
+}
+
+.app {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 40px 0;
+}
+
+/* ── Pantallas ── */
+.screen { display: none; flex-direction: column; align-items: center; padding: 32px 24px 24px; width: 100%; min-height: 100vh; }
+.screen.active { display: flex; }
+
+/* ── Tipografía ── */
+.titulo {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 36px;
+  color: #3BB8F5;
+  text-align: center;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.subtitulo {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  letter-spacing: 2px;
+  margin-bottom: 32px;
+}
+.section-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 22px;
+  color: #3BB8F5;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+/* ── Inputs ── */
+.input-group { width: 100%; margin-bottom: 14px; }
+.input-group label { font-size: 12px; font-weight: 800; color: #888; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+.input-group input {
+  width: 100%; padding: 13px 16px;
+  background: #1a1a1a; border: 2px solid #2a2a2a;
+  border-radius: 12px; color: #f0f0f0;
+  font-family: 'Nunito', sans-serif; font-size: 16px;
+  outline: none; transition: border-color 0.2s;
+}
+.input-group input:focus { border-color: #3BB8F5; }
+
+/* ── Botones ── */
+.btn-primary {
+  width: 100%; padding: 15px;
+  background: #3BB8F5; color: #0a0a0a;
+  font-family: 'Black Han Sans', sans-serif; font-size: 18px;
+  border: none; border-radius: 30px; cursor: pointer;
+  letter-spacing: 1px; transition: opacity 0.2s, transform 0.1s;
+  margin-top: 4px;
+}
+.btn-primary:hover { opacity: 0.85; transform: scale(1.01); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-danger {
+  padding: 7px 16px;
+  background: #ef4444; color: #fff;
+  font-family: 'Black Han Sans', sans-serif; font-size: 13px;
+  border: none; border-radius: 20px; cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-danger:hover { opacity: 0.8; }
+
+.btn-link {
+  background: none; border: none;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 16px; color: #3BB8F5;
+  cursor: pointer; text-decoration: underline;
+  margin-top: 16px;
+}
+
+/* ── Mensajes ── */
+.msg { width: 100%; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 700; margin-bottom: 12px; display: none; }
+.msg.ok  { background: #14532d; color: #86efac; display: block; }
+.msg.err { background: #450a0a; color: #fca5a5; display: block; }
+
+/* ── Navbar del panel ── */
+.navbar {
+  width: 100%; background: #111; border-bottom: 2px solid #1f1f1f;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; position: sticky; top: 0; z-index: 10;
+}
+.navbar-title { font-family: 'Black Han Sans', sans-serif; font-size: 18px; color: #3BB8F5; }
+.navbar-admin { font-size: 12px; color: #666; }
+.btn-logout {
+  background: none; border: 1px solid #333; border-radius: 20px;
+  color: #888; font-size: 12px; font-weight: 700;
+  padding: 5px 12px; cursor: pointer; transition: all 0.2s;
+}
+.btn-logout:hover { border-color: #ef4444; color: #ef4444; }
+
+/* ── Tabs ── */
+.tabs {
+  width: 100%; display: flex; gap: 6px;
+  padding: 14px 16px; background: #111;
+  border-bottom: 2px solid #1f1f1f; flex-wrap: wrap;
+}
+.tab {
+  flex: 1; min-width: 70px; padding: 9px 6px;
+  background: #1a1a1a; border: 2px solid #2a2a2a;
+  border-radius: 12px; color: #666;
+  font-family: 'Black Han Sans', sans-serif; font-size: 12px;
+  cursor: pointer; text-align: center; transition: all 0.2s; letter-spacing: 0.5px;
+}
+.tab.active { background: #3BB8F5; border-color: #3BB8F5; color: #0a0a0a; }
+
+/* ── Contenido del panel ── */
+.panel-content { width: 100%; padding: 20px 16px; flex: 1; }
+
+/* ── Stats ── */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-card {
+  background: #1a1a1a; border: 2px solid #2a2a2a;
+  border-radius: 16px; padding: 16px; text-align: center;
+}
+.stat-num { font-family: 'Black Han Sans', sans-serif; font-size: 32px; color: #3BB8F5; }
+.stat-label { font-size: 11px; color: #666; font-weight: 700; letter-spacing: 1px; margin-top: 2px; }
+.stat-card.verde .stat-num { color: #4ade80; }
+.stat-card.rojo  .stat-num { color: #f87171; }
+.stat-card.naranja .stat-num { color: #fb923c; }
+.stat-card.gris  .stat-num { color: #9ca3af; }
+
+/* ── Tarjetas de reserva ── */
+.reserva-card {
+  background: #1a1a1a; border: 2px solid #2a2a2a;
+  border-radius: 16px; padding: 14px 16px; margin-bottom: 10px;
+}
+.reserva-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.reserva-tipo { font-family: 'Black Han Sans', sans-serif; font-size: 16px; color: #f0f0f0; }
+.reserva-puesto { font-family: 'Black Han Sans', sans-serif; font-size: 14px; color: #3BB8F5; }
+.reserva-info { font-size: 12px; color: #888; line-height: 1.7; }
+.reserva-info strong { color: #ccc; }
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
+}
+.badge.activa    { background: #14532d; color: #4ade80; }
+.badge.completada{ background: #1e3a5f; color: #60a5fa; }
+.badge.cancelada { background: #431407; color: #fb923c; }
+.badge.expirada  { background: #1f1f1f; color: #9ca3af; }
+
+/* ── Espacios ── */
+.espacio-card {
+  background: #1a1a1a; border: 2px solid #2a2a2a;
+  border-radius: 16px; padding: 16px; margin-bottom: 10px;
+}
+.espacio-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.espacio-tipo { font-family: 'Black Han Sans', sans-serif; font-size: 18px; color: #f0f0f0; }
+.espacio-nums { font-size: 13px; color: #888; }
+.espacio-nums span { color: #3BB8F5; font-weight: 900; }
+.barra-wrap { background: #0a0a0a; border-radius: 99px; height: 8px; margin-bottom: 12px; overflow: hidden; }
+.barra-fill { height: 100%; border-radius: 99px; background: #3BB8F5; transition: width 0.4s; }
+.barra-fill.lleno { background: #ef4444; }
+.espacio-edit { display: flex; gap: 8px; align-items: center; }
+.espacio-edit input {
+  flex: 1; padding: 8px 12px;
+  background: #0a0a0a; border: 2px solid #2a2a2a;
+  border-radius: 10px; color: #f0f0f0;
+  font-family: 'Nunito', sans-serif; font-size: 15px; outline: none;
+}
+.espacio-edit input:focus { border-color: #3BB8F5; }
+.btn-guardar {
+  padding: 8px 16px;
+  background: #3BB8F5; color: #0a0a0a;
+  font-family: 'Black Han Sans', sans-serif; font-size: 13px;
+  border: none; border-radius: 20px; cursor: pointer;
+}
+
+/* ── Filtros ── */
+.filtros { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.filtro-btn {
+  padding: 6px 14px; border-radius: 20px;
+  background: #1a1a1a; border: 2px solid #2a2a2a;
+  color: #888; font-size: 12px; font-weight: 800;
+  cursor: pointer; transition: all 0.2s;
+}
+.filtro-btn.active { background: #3BB8F5; border-color: #3BB8F5; color: #0a0a0a; }
+
+/* ── Empty state ── */
+.empty { text-align: center; color: #444; padding: 40px 20px; font-size: 14px; }
+
+/* ── Loading ── */
+.loading { text-align: center; color: #3BB8F5; padding: 30px; font-family: 'Black Han Sans', sans-serif; letter-spacing: 1px; }
+
+.gap { height: 20px; }
+.gap-sm { height: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════════════════════════════════════ PANTALLA: LOGIN ══ -->
+  <div id="s-login" class="screen active">
+    <div class="gap"></div>
+    <div class="titulo">PARQUEADERO USC</div>
+    <div class="subtitulo">PANEL DE ADMINISTRADOR</div>
+
+    <div id="msg-login" class="msg"></div>
+
+    <div class="input-group">
+      <label>CORREO ELECTRÓNICO</label>
+      <input type="email" id="inp-email" placeholder="admin@usc.edu.co" autocomplete="email"/>
+    </div>
+    <div class="input-group">
+      <label>CONTRASEÑA</label>
+      <input type="password" id="inp-password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <div class="gap-sm"></div>
+    <button class="btn-primary" onclick="doLogin()">INICIAR SESIÓN</button>
+    <button class="btn-link" onclick="irRegistro()">Registrar nuevo administrador</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ PANTALLA: REGISTRO ══ -->
+  <div id="s-registro" class="screen">
+    <div class="gap"></div>
+    <div class="titulo">NUEVO ADMIN</div>
+    <div class="subtitulo">REGISTRO DE ADMINISTRADOR</div>
+
+    <div id="msg-registro" class="msg"></div>
+
+    <div class="input-group">
+      <label>NOMBRE COMPLETO</label>
+      <input type="text" id="reg-nombre" placeholder="Tu nombre"/>
+    </div>
+    <div class="input-group">
+      <label>CORREO ELECTRÓNICO</label>
+      <input type="email" id="reg-email" placeholder="admin@usc.edu.co"/>
+    </div>
+    <div class="input-group">
+      <label>CONTRASEÑA (mínimo 8 caracteres)</label>
+      <input type="password" id="reg-password" placeholder="••••••••"/>
+    </div>
+    <div class="input-group">
+      <label>CÓDIGO SECRETO DE ADMINISTRADOR</label>
+      <input type="password" id="reg-codigo" placeholder="Código proporcionado por el sistema"/>
+    </div>
+    <div class="gap-sm"></div>
+    <button class="btn-primary" onclick="doRegistro()">REGISTRARSE</button>
+    <button class="btn-link" onclick="irLogin()">Ya tengo cuenta — Iniciar sesión</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ PANTALLA: PANEL ══ -->
+  <div id="s-panel" class="screen" style="padding:0;">
+
+    <!-- Navbar -->
+    <div class="navbar">
+      <div>
+        <div class="navbar-title">ADMIN USC</div>
+        <div class="navbar-admin" id="navbar-nombre"></div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">SALIR</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" id="tab-dashboard" onclick="cambiarTab('dashboard')">DASHBOARD</div>
+      <div class="tab" id="tab-activas"   onclick="cambiarTab('activas')">ACTIVAS</div>
+      <div class="tab" id="tab-historial" onclick="cambiarTab('historial')">HISTORIAL</div>
+      <div class="tab" id="tab-espacios"  onclick="cambiarTab('espacios')">ESPACIOS</div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="panel-content">
+
+      <!-- Dashboard -->
+      <div id="tab-content-dashboard">
+        <div class="section-title">RESUMEN HOY</div>
+        <div id="msg-stats" class="msg"></div>
+        <div class="stats-grid" id="stats-grid">
+          <div class="loading" style="grid-column:span 2;">Cargando...</div>
+        </div>
+        <div class="section-title">ESPACIOS EN VIVO</div>
+        <div id="dashboard-espacios">
+          <div class="loading">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- Reservas activas -->
+      <div id="tab-content-activas" style="display:none;">
+        <div class="section-title">RESERVAS ACTIVAS</div>
+        <div id="msg-activas" class="msg"></div>
+        <div id="lista-activas"><div class="loading">Cargando...</div></div>
+      </div>
+
+      <!-- Historial -->
+      <div id="tab-content-historial" style="display:none;">
+        <div class="section-title">HISTORIAL COMPLETO</div>
+        <div class="filtros">
+          <button class="filtro-btn active" id="f-todos"      onclick="filtrarHistorial(null)">TODOS</button>
+          <button class="filtro-btn"        id="f-activa"     onclick="filtrarHistorial('activa')">ACTIVA</button>
+          <button class="filtro-btn"        id="f-completada" onclick="filtrarHistorial('completada')">COMPLETADA</button>
+          <button class="filtro-btn"        id="f-cancelada"  onclick="filtrarHistorial('cancelada')">CANCELADA</button>
+          <button class="filtro-btn"        id="f-expirada"   onclick="filtrarHistorial('expirada')">EXPIRADA</button>
+        </div>
+        <div id="msg-historial" class="msg"></div>
+        <div id="lista-historial"><div class="loading">Cargando...</div></div>
+        <div id="historial-pagination" style="display:flex;gap:8px;justify-content:center;margin-top:14px;"></div>
+      </div>
+
+      <!-- Espacios -->
+      <div id="tab-content-espacios" style="display:none;">
+        <div class="section-title">GESTIÓN DE ESPACIOS</div>
+        <p style="font-size:13px;color:#666;margin-bottom:16px;">Modifica la capacidad total de cada tipo de espacio. No puedes reducirlo por debajo de los espacios actualmente ocupados.</p>
+        <div id="msg-espacios" class="msg"></div>
+        <div id="lista-espacios"><div class="loading">Cargando...</div></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Configuración ──────────────────────────────────────────────────────────
+const API   = window.location.origin + "/api/admin";
+let token   = localStorage.getItem("pq_admin_token") || null;
+let adminData = JSON.parse(localStorage.getItem("pq_admin_data") || "null");
+let historialOffset = 0;
+let historialFiltro = null;
+const HISTORIAL_LIMIT = 20;
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function mostrarMsg(id, tipo, texto) {
+  const el = document.getElementById(id);
+  el.className = "msg " + tipo;
+  el.textContent = texto;
+  setTimeout(() => { el.className = "msg"; }, 4000);
+}
+
+function formatFecha(str) {
+  if (!str) return "—";
+  return new Date(str).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
+}
+
+function badgeEstado(estado) {
+  return `<span class="badge ${estado}">${estado.charAt(0).toUpperCase() + estado.slice(1)}</span>`;
+}
+
+async function apiFetch(ruta, opts = {}) {
+  const res = await fetch(API + ruta, {
+    ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token,
+      ...(opts.headers || {})
+    }
+  });
+  const data = await res.json();
+  if (res.status === 401) { doLogout(); return null; }
+  return { ok: res.ok, status: res.status, data };
+}
+
+// ── Navegación ─────────────────────────────────────────────────────────────
+function irLogin()    { document.getElementById("s-registro").classList.remove("active"); document.getElementById("s-login").classList.add("active"); }
+function irRegistro() { document.getElementById("s-login").classList.remove("active"); document.getElementById("s-registro").classList.add("active"); }
+function irPanel()    {
+  ["s-login","s-registro"].forEach(s => document.getElementById(s).classList.remove("active"));
+  document.getElementById("s-panel").classList.add("active");
+  document.getElementById("navbar-nombre").textContent = adminData?.nombre || "";
+  cargarDashboard();
+}
+
+// ── Login ──────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email    = document.getElementById("inp-email").value.trim();
+  const password = document.getElementById("inp-password").value;
+  if (!email || !password) return mostrarMsg("msg-login", "err", "Completa todos los campos");
+
+  const res = await fetch(API + "/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (!res.ok) return mostrarMsg("msg-login", "err", data.message);
+
+  token     = data.token;
+  adminData = data.admin;
+  localStorage.setItem("pq_admin_token", token);
+  localStorage.setItem("pq_admin_data",  JSON.stringify(adminData));
+  irPanel();
+}
+
+// ── Registro ───────────────────────────────────────────────────────────────
+async function doRegistro() {
+  const nombre       = document.getElementById("reg-nombre").value.trim();
+  const email        = document.getElementById("reg-email").value.trim();
+  const password     = document.getElementById("reg-password").value;
+  const codigo_secreto = document.getElementById("reg-codigo").value;
+
+  if (!nombre || !email || !password || !codigo_secreto) {
+    return mostrarMsg("msg-registro", "err", "Completa todos los campos");
+  }
+
+  const res = await fetch(API + "/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, email, password, codigo_secreto })
+  });
+  const data = await res.json();
+  if (!res.ok) return mostrarMsg("msg-registro", "err", data.message);
+
+  mostrarMsg("msg-registro", "ok", "Administrador registrado. Ya puedes iniciar sesión.");
+  setTimeout(irLogin, 2000);
+}
+
+// ── Logout ─────────────────────────────────────────────────────────────────
+function doLogout() {
+  token = null; adminData = null;
+  localStorage.removeItem("pq_admin_token");
+  localStorage.removeItem("pq_admin_data");
+  document.getElementById("s-panel").classList.remove("active");
+  document.getElementById("s-login").classList.add("active");
+  document.getElementById("inp-password").value = "";
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function cambiarTab(tab) {
+  ["dashboard","activas","historial","espacios"].forEach(t => {
+    document.getElementById("tab-" + t).classList.toggle("active", t === tab);
+    document.getElementById("tab-content-" + t).style.display = t === tab ? "block" : "none";
+  });
+  if (tab === "dashboard") cargarDashboard();
+  if (tab === "activas")   cargarActivas();
+  if (tab === "historial") { historialOffset = 0; cargarHistorial(); }
+  if (tab === "espacios")  cargarEspacios();
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────
+async function cargarDashboard() {
+  const [resStats, resEsp] = await Promise.all([
+    apiFetch("/estadisticas"),
+    apiFetch("/espacios")
+  ]);
+
+  if (resStats?.ok) {
+    const s = resStats.data;
+    document.getElementById("stats-grid").innerHTML = `
+      <div class="stat-card verde"><div class="stat-num">${s.activas}</div><div class="stat-label">ACTIVAS</div></div>
+      <div class="stat-card"><div class="stat-num">${s.hoy}</div><div class="stat-label">RESERVAS HOY</div></div>
+      <div class="stat-card rojo"><div class="stat-num">${s.canceladas}</div><div class="stat-label">CANCELADAS</div></div>
+      <div class="stat-card gris"><div class="stat-num">${s.expiradas}</div><div class="stat-label">EXPIRADAS</div></div>
+      <div class="stat-card" style="grid-column:span 2;"><div class="stat-num">${s.total_usuarios}</div><div class="stat-label">USUARIOS REGISTRADOS</div></div>
+    `;
+  }
+
+  if (resEsp?.ok) {
+    document.getElementById("dashboard-espacios").innerHTML = resEsp.data.map(e => {
+      const pct  = Math.round((e.ocupados / e.capacidad_total) * 100);
+      const lleno = pct >= 90;
+      return `
+        <div class="espacio-card">
+          <div class="espacio-top">
+            <div class="espacio-tipo">${e.tipo}</div>
+            <div class="espacio-nums"><span>${e.disponibles}</span> / ${e.capacidad_total} disponibles</div>
+          </div>
+          <div class="barra-wrap"><div class="barra-fill ${lleno ? 'lleno' : ''}" style="width:${pct}%"></div></div>
+        </div>`;
+    }).join("") || "<div class='empty'>Sin espacios configurados</div>";
+  }
+}
+
+// ── Reservas activas ───────────────────────────────────────────────────────
+async function cargarActivas() {
+  document.getElementById("lista-activas").innerHTML = "<div class='loading'>Cargando...</div>";
+  const res = await apiFetch("/reservas/activas");
+  if (!res?.ok) return mostrarMsg("msg-activas", "err", res?.data?.message || "Error al cargar");
+
+  const lista = res.data;
+  if (!lista.length) {
+    document.getElementById("lista-activas").innerHTML = "<div class='empty'>No hay reservas activas en este momento</div>";
+    return;
+  }
+  document.getElementById("lista-activas").innerHTML = lista.map(r => `
+    <div class="reserva-card" id="card-${r.id}">
+      <div class="reserva-card-top">
+        <div>
+          <div class="reserva-tipo">${r.tipo} ${r.placa ? "· " + r.placa : ""}</div>
+          <div class="reserva-puesto">Puesto ${r.puesto || "—"}</div>
+        </div>
+        <button class="btn-danger" onclick="cancelarReserva(${r.id}, 'activas')">CANCELAR</button>
+      </div>
+      <div class="reserva-info">
+        <strong>${r.usuario_nombre}</strong> · C.C. ${r.usuario_cedula}<br>
+        📅 ${formatFecha(r.fecha_reserva)} · Expira: ${formatFecha(r.expira_en)}<br>
+        📞 ${r.usuario_telefono || "—"}
+      </div>
+    </div>`).join("");
+}
+
+// ── Historial ──────────────────────────────────────────────────────────────
+async function cargarHistorial() {
+  document.getElementById("lista-historial").innerHTML = "<div class='loading'>Cargando...</div>";
+  const filtro = historialFiltro ? `&estado=${historialFiltro}` : "";
+  const res = await apiFetch(`/reservas/historial?limit=${HISTORIAL_LIMIT}&offset=${historialOffset}${filtro}`);
+  if (!res?.ok) return mostrarMsg("msg-historial", "err", res?.data?.message || "Error al cargar");
+
+  const lista = res.data;
+  if (!lista.length) {
+    document.getElementById("lista-historial").innerHTML = "<div class='empty'>No hay registros con este filtro</div>";
+    document.getElementById("historial-pagination").innerHTML = "";
+    return;
+  }
+
+  document.getElementById("lista-historial").innerHTML = lista.map(r => `
+    <div class="reserva-card">
+      <div class="reserva-card-top">
+        <div>
+          <div class="reserva-tipo">${r.tipo} ${r.placa ? "· " + r.placa : ""}</div>
+          <div class="reserva-puesto">Puesto ${r.puesto || "—"}</div>
+        </div>
+        ${badgeEstado(r.estado)}
+      </div>
+      <div class="reserva-info">
+        <strong>${r.usuario_nombre}</strong> · C.C. ${r.usuario_cedula}<br>
+        📅 ${formatFecha(r.fecha_reserva)}
+        ${r.hora_salida ? " · Salida: " + formatFecha(r.hora_salida) : ""}
+      </div>
+      ${r.estado === 'activa' ? `<div style="margin-top:8px;"><button class="btn-danger" onclick="cancelarReserva(${r.id}, 'historial')">CANCELAR</button></div>` : ""}
+    </div>`).join("");
+
+  // Paginación
+  const pagDiv = document.getElementById("historial-pagination");
+  pagDiv.innerHTML = "";
+  if (historialOffset > 0) {
+    const btnPrev = document.createElement("button");
+    btnPrev.className = "filtro-btn active";
+    btnPrev.textContent = "← ANTERIOR";
+    btnPrev.onclick = () => { historialOffset -= HISTORIAL_LIMIT; cargarHistorial(); };
+    pagDiv.appendChild(btnPrev);
+  }
+  if (lista.length === HISTORIAL_LIMIT) {
+    const btnNext = document.createElement("button");
+    btnNext.className = "filtro-btn active";
+    btnNext.textContent = "SIGUIENTE →";
+    btnNext.onclick = () => { historialOffset += HISTORIAL_LIMIT; cargarHistorial(); };
+    pagDiv.appendChild(btnNext);
+  }
+}
+
+function filtrarHistorial(estado) {
+  historialFiltro = estado;
+  historialOffset = 0;
+  ["todos","activa","completada","cancelada","expirada"].forEach(f => {
+    const btn = document.getElementById("f-" + f);
+    if (btn) btn.classList.toggle("active", (estado === null && f === "todos") || estado === f);
+  });
+  cargarHistorial();
+}
+
+// ── Espacios ───────────────────────────────────────────────────────────────
+async function cargarEspacios() {
+  document.getElementById("lista-espacios").innerHTML = "<div class='loading'>Cargando...</div>";
+  const res = await apiFetch("/espacios");
+  if (!res?.ok) return mostrarMsg("msg-espacios", "err", res?.data?.message || "Error al cargar");
+
+  document.getElementById("lista-espacios").innerHTML = res.data.map(e => {
+    const pct   = Math.round((e.ocupados / e.capacidad_total) * 100);
+    const lleno = pct >= 90;
+    return `
+      <div class="espacio-card">
+        <div class="espacio-top">
+          <div class="espacio-tipo">${e.tipo}</div>
+          <div class="espacio-nums">
+            <span>${e.disponibles}</span> disponibles · ${e.ocupados} ocupados
+          </div>
+        </div>
+        <div class="barra-wrap"><div class="barra-fill ${lleno ? 'lleno' : ''}" style="width:${pct}%"></div></div>
+        <div class="espacio-edit">
+          <input type="number" id="cap-${e.id}" value="${e.capacidad_total}" min="${e.ocupados}" max="999"
+                 placeholder="Nueva capacidad"/>
+          <button class="btn-guardar" onclick="guardarEspacio(${e.id})">GUARDAR</button>
+        </div>
+      </div>`;
+  }).join("") || "<div class='empty'>Sin espacios configurados</div>";
+}
+
+async function guardarEspacio(id) {
+  const input = document.getElementById("cap-" + id);
+  const capacidad_total = parseInt(input.value);
+  if (!capacidad_total || capacidad_total < 1) {
+    return mostrarMsg("msg-espacios", "err", "Ingresa una capacidad válida");
+  }
+  const res = await apiFetch("/espacios/" + id, {
+    method: "PATCH",
+    body: JSON.stringify({ capacidad_total })
+  });
+  if (!res?.ok) return mostrarMsg("msg-espacios", "err", res?.data?.message || "Error al guardar");
+  mostrarMsg("msg-espacios", "ok", "Capacidad actualizada correctamente");
+  cargarEspacios();
+}
+
+// ── Cancelar reserva ───────────────────────────────────────────────────────
+async function cancelarReserva(id, origen) {
+  if (!confirm("¿Seguro que deseas cancelar esta reserva?")) return;
+  const res = await apiFetch("/reservas/" + id + "/cancelar", { method: "PATCH" });
+  if (!res?.ok) return mostrarMsg("msg-" + origen, "err", res?.data?.message || "Error al cancelar");
+  mostrarMsg("msg-" + origen, "ok", "Reserva cancelada correctamente");
+  if (origen === "activas")   cargarActivas();
+  if (origen === "historial") cargarHistorial();
+  if (origen === "dashboard") cargarDashboard();
+}
+
+// ── Auto-login si hay token guardado ──────────────────────────────────────
+(function init() {
+  if (token && adminData) irPanel();
+})();
+</script>
+</body>
+</html>
