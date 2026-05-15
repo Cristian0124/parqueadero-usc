@@ -5,7 +5,7 @@ const rateLimit  = require(“express-rate-limit”);
 require(“dotenv”).config();
 
 const authRoutes    = require(”./routes/authRoutes”);
-const vehiculoRoutes = require(”./routes/Rutas vehiculares”);
+const vehiculoRoutes = require("./routes/vehiculoRoutes")
 const parqueoRoutes  = require(”./routes/parqueoRoutes”);
 const reservaRoutes  = require(”./routes/reservaRoutes”);
 const adminRoutes    = require(”./routes/adminRoutes”);
