@@ -8,6 +8,7 @@ const authRoutes    = require("./routes/authRoutes");
 const vehiculoRoutes = require("./routes/vehiculoRoutes");
 const parqueoRoutes  = require("./routes/parqueoRoutes");
 const reservaRoutes  = require("./routes/reservaRoutes");
+const adminRoutes    = require("./routes/adminRoutes");
 const db = require("./config/db");
 const path = require("path");
 
@@ -78,6 +79,12 @@ app.use("/api/auth",      limitadorAuth, authRoutes);
 app.use("/api/vehiculos", vehiculoRoutes);
 app.use("/api/parqueos",  parqueoRoutes);
 app.use("/api/reservas",  reservaRoutes);
+app.use("/api/admin",     adminRoutes);
+
+// Panel de administrador
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin.html"));
+});
 
 // ── Archivos estáticos ─────────────────────────────────────────────────────
 app.use(express.static(__dirname));
@@ -99,3 +106,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Servidor corriendo en puerto ${PORT}`);
 });
+
