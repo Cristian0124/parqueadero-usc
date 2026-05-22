@@ -852,6 +852,14 @@ body {
     <button class="btn-link dark" onclick="go('s-qr')">INICIAR SESIÓN CON QR</button>
     <div class="gap"></div>
     <button class="btn-link" onclick="go('s-visitante')">ENTRA COMO VISITANTE</button>
+    
+    <div class="gap"></div>
+<!--BOTON PARA ADMINISTRADORES -->
+<button class="btn-link dark"
+onclick="go('s-admin-login')">
+  ADMIN
+</button>
+    
   </div>
   <div id="inicio-con-sesion" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;">
     <button class="btn-bubble full" onclick="go('s-menu')">IR AL MENÚ</button>
@@ -881,6 +889,43 @@ body {
   <button class="btn-link" onclick="go('s-visitante')">VISITANTE</button>
   <div class="spacer"></div>
   <button class="btn-link" onclick="go('s-inicio')">ATRÁS</button>
+</div>
+  <!-- login para ingreso de administrador -->
+  <div id="s-admin-login" class="screen">
+  <div class="big-title">ADMIN</div>
+  <div class="gap"></div>
+    <input
+    type="text"
+    id="admin-user"
+    class="bubble-input"
+    placeholder="USUARIO"
+  >
+  <div class="gap"></div>
+  <input
+    type="password"
+    id="admin-pass"
+    class="bubble-input"
+    placeholder="CONTRASEÑA"
+    > 
+    <div class="gap"></div>
+  <button class="btn-bubble full"
+    onclick="loginAdmin()">
+    INGRESAR
+  </button>
+  <div
+    id="admin-error"
+    style="
+      color:red;
+      font-weight:bold;
+      text-align:center;
+      margin-top:16px;
+    ">
+  </div>
+  <div class="gap"></div>
+ <button class="btn-link"
+  onclick="go('s-inicio')">
+  ATRÁS
+ </button>
 </div>
 
 <!-- ══════════════════════════════
@@ -1014,6 +1059,40 @@ body {
   <button class="btn-bubble" onclick="go('s-historial')">HISTORIAL</button>
   <div class="spacer"></div>
   <button class="btn-link" onclick="cerrarSesion()">CERRAR SESIÓN</button>
+</div>
+
+  <!-- panel para el administrador -->
+  <div id="s-admin-panel" class="screen">
+  <div class="big-title">
+    PANEL ADMIN
+  </div>
+  <div class="sub-title">
+    ESCANEAR QR DE RESERVAS
+  </div>
+  <div class="gap"></div>
+  <div id="admin-qr-reader"
+    style="
+      width:90%;
+      margin:auto;
+      border-radius:20px;
+      overflow:hidden;
+    ">
+  </div>
+  <div class="gap"></div>
+  <div id="admin-qr-result"
+    style="
+      text-align:center;
+      font-weight:bold;
+      color:#0a0a0a;
+      font-size:18px;
+    ">
+  </div>
+  <div class="spacer">
+  </div>
+  <button class="btn-link"
+    onclick="go('s-inicio')">
+    CERRAR PANEL
+  </button>
 </div>
 
 <!-- ══════════════════════════════
@@ -1421,6 +1500,11 @@ async function go(id) {
     const region = document.getElementById('qr-scanner-region');
     if (region) region.innerHTML = '';
   }
+
+  if (id === 's-admin-panel') {
+  setTimeout(iniciarAdminQR, 300);
+  }
+  
   if (id === 's-menu') { setTimeout(actualizarBotonSalida, 50); setTimeout(iniciarTemporizador, 50); }
   if (id === 's-historial') cargarHistorial();
 
@@ -1435,6 +1519,8 @@ async function go(id) {
     setTimeout(() => initMapa(mapasIds[id]), 200);
   }
 }
+
+  
 
 // ─── ABRIR RESERVA DESDE MENÚ ──────────────────
 function abrirReserva(tipo) {
@@ -1833,7 +1919,24 @@ async function doLogin() {
     actualizarInicio();
   } catch (e) { showAlert('login-alert', e.message); }
 }
+  
+function loginAdmin() {
+  const user =
+    document.getElementById("admin-user").value;
+  const pass =
+    document.getElementById("admin-pass").value;
+  if (user === "ADMIN" && pass === "0987") {
+    go("s-admin-panel");
+  } else {
+    document.getElementById("admin-error").innerText =
+      "USUARIO O CONTRASEÑA INCORRECTOS";
+  }
+}
 
+
+
+
+  
 // ─── REGISTRO ───────────────────────────────────
 async function doRegistro() {
   const doc = document.getElementById('reg-doc').value.trim();
@@ -2345,6 +2448,79 @@ function onQRScanned(texto) {
     setTimeout(() => { document.getElementById('login-doc').value = cedula; go('s-login'); }, 1200);
   }
 }
+
+  
+async function iniciarAdminQR() {
+  const region = document.getElementById('admin-qr-reader');
+  region.innerHTML = '';
+  const video = document.createElement('video');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('autoplay', '');
+  video.style.width = '100%';
+  video.style.borderRadius = '20px';
+  region.appendChild(video);
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment'
+      },
+      audio: false
+    });
+    video.srcObject = stream;
+    video.play();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    async function scan() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        const imageData = ctx.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+        const code = jsQR(
+          imageData.data,
+          imageData.width,
+          imageData.height
+        );
+        if (code) {
+          document.getElementById(
+            "admin-qr-result"
+          ).innerHTML =   `
+            <div style="
+              background:#d4ffd4;
+              padding:14px;
+              border-radius:18px;
+              border:2px solid #0a0;
+              margin-top:18px;
+            ">
+              QR ESCANEADO<br><br>
+              ${code.data}
+            </div>
+          `;
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+      }
+      requestAnimationFrame(scan);
+    }
+    scan();
+  } catch(err) {
+    document.getElementById(
+      "admin-qr-result"
+    ).innerHTML =
+    `
+      <div style="color:red;font-weight:bold;">
+        Error cámara: ${err.message}
+      </div>
+    `;
+  }
+}
+
+  
 
 // ─── INIT ────────────────────────────────────────
 actualizarInicio();
