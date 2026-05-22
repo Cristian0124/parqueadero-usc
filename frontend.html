@@ -2124,7 +2124,9 @@ async function cargarHistorial() {
     if (!res.ok) throw new Error();
     const data = await res.json();
     reservas = data.map(r => Object.assign({}, r, {
-      estado:        r.estado === 'activa' ? 'Activa' :
+      estado:        r.estado === 'pendiente' ? 'Pendiente' :
+                     r.estado === 'ocupado' ? 'Ocupado' :
+                     r.estado === 'activa' ? 'Activa' :
                      r.estado === 'completada' ? 'Completada' :
                      r.estado === 'cancelada' ? 'Cancelada' :
                      r.estado === 'expirada' ? 'Expirada' : r.estado,
