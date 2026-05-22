@@ -51,7 +51,7 @@ app.use(express.static(__dirname));
 // Cron: cancelar reservas expiradas cada 5 minutos
 setInterval(() => {
 db.query(
-"UPDATE reservas SET estado = 'expirada' WHERE estado = 'activa' AND expira_en < NOW()",
+"UPDATE reservas SET estado = 'expirada' WHERE estado = 'pendiente' AND expira_en < NOW()",
 (err, result) => {
 if (!err && result.affectedRows > 0) {
 console.log(`${result.affectedRows} reserva(s) expirada(s)`);
