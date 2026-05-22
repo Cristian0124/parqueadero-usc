@@ -1,5 +1,5 @@
 // sw.js — Service Worker para Parqueadero USC PWA
-const CACHE_NAME = 'parqueadero-usc-v1';
+const CACHE_NAME = 'parqueadero-usc-v2';
 const ASSETS = [
   '/frontend.html',
   '/manifest.json'
