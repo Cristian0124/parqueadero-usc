@@ -1054,8 +1054,6 @@ onclick="go('s-admin-login')">
   <button class="vehicle-option" onclick="abrirReserva('Bicicleta')"><div class="vehicle-dot"></div> BICICLETA</button>
   <button class="vehicle-option" onclick="abrirReserva('Patineta')"><div class="vehicle-dot"></div> PATINETA</button>
   <div class="gap"></div>
-  <button id="btn-qr-entrada" class="btn-salida disabled" onclick="irAQREntrada()" style="background:#f59e0b;border-color:#d97706;">&#9654; QR PARA ENTRAR</button>
-  <div class="gap-sm"></div>
   <button id="btn-qr-salida" class="btn-salida disabled" onclick="irAQRSalida()">&#9654; QR PARA SALIR</button>
   <div class="gap-sm"></div>
   <button class="btn-bubble" onclick="go('s-historial')">HISTORIAL</button>
@@ -2230,36 +2228,16 @@ function renderHistorial() {
 
 // ─── BOTÓN SALIDA ────────────────────────────────
 function actualizarBotonSalida() {
-  // Botón QR entrada (solo cuando está pendiente)
-  const btnEntrada = document.getElementById('btn-qr-entrada');
-  if (btnEntrada) {
-    const pendiente = reservas.find(r => r.estado === 'Pendiente' || r.estado === 'pendiente');
-    if (pendiente) {
-      btnEntrada.classList.remove('disabled');
-      btnEntrada.innerHTML = '&#9654; QR PARA ENTRAR — ' + pendiente.tipo.toUpperCase();
-    } else {
-      btnEntrada.classList.add('disabled');
-      btnEntrada.innerHTML = '&#9654; QR PARA ENTRAR';
-    }
-  }
-  // Botón QR salida (solo cuando está ocupado)
   const btn = document.getElementById('btn-qr-salida');
   if (!btn) return;
-  const ocupado = reservas.find(r => r.estado === 'Ocupado' || r.estado === 'ocupado');
-  if (ocupado) {
+  const activa = reservas.find(r => r.estado === 'Activa');
+  if (activa) {
     btn.classList.remove('disabled');
-    btn.innerHTML = '&#9654; QR PARA SALIR — ' + ocupado.tipo.toUpperCase();
+    btn.innerHTML = '&#9654; QR PARA SALIR — ' + activa.tipo.toUpperCase();
   } else {
     btn.classList.add('disabled');
     btn.innerHTML = '&#9654; QR PARA SALIR';
   }
-}
-
-function irAQREntrada() {
-  const pendiente = reservas.find(r => r.estado === 'Pendiente' || r.estado === 'pendiente');
-  if (!pendiente) return;
-  mostrarQRReserva(pendiente);
-  go('s-reserva-ok');
 }
 
 function irAQRSalida() {
@@ -2509,21 +2487,62 @@ async function iniciarAdminQR() {
           imageData.height
         );
         if (code) {
-          document.getElementById(
-            "admin-qr-result"
-          ).innerHTML =   `
-            <div style="
-              background:#d4ffd4;
-              padding:14px;
-              border-radius:18px;
-              border:2px solid #0a0;
-              margin-top:18px;
-            ">
-              QR ESCANEADO<br><br>
-              ${code.data}
-            </div>
-          `;
           stream.getTracks().forEach(t => t.stop());
+          const resultEl = document.getElementById("admin-qr-result");
+          resultEl.innerHTML = `<div style="text-align:center;padding:14px;font-weight:bold;">⏳ Procesando QR...</div>`;
+
+          let qrData = {};
+          try { qrData = JSON.parse(code.data); } catch(e) { qrData = { token: code.data }; }
+
+          const esSalida = qrData.accion === 'salida' || (qrData.tokenSalida) || code.data.includes('SALIDA-');
+
+          if (esSalida) {
+            const tokenSalida = qrData.tokenSalida || code.data;
+            try {
+              const resp = await fetch(API + '/reservas/salida-qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ qr_salida_token: tokenSalida })
+              });
+              const data = await resp.json();
+              if (resp.ok) {
+                resultEl.innerHTML = `<div style="background:#d4ffd4;padding:14px;border-radius:18px;border:2px solid #0a0;margin-top:18px;text-align:center;">
+                  ✅ SALIDA REGISTRADA<br><br>Puesto liberado correctamente
+                </div>`;
+              } else {
+                resultEl.innerHTML = `<div style="background:#ffd4d4;padding:14px;border-radius:18px;border:2px solid #a00;margin-top:18px;text-align:center;">
+                  ❌ ${data.message}
+                </div>`;
+              }
+            } catch(e) {
+              resultEl.innerHTML = `<div style="background:#ffd4d4;padding:14px;border-radius:18px;border:2px solid #a00;margin-top:18px;">Error de conexión</div>`;
+            }
+          } else {
+            const tokenEntrada = qrData.token || code.data;
+            try {
+              const resp = await fetch(API + '/reservas/validar-qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ qr_token: tokenEntrada })
+              });
+              const data = await resp.json();
+              if (resp.ok) {
+                resultEl.innerHTML = `<div style="background:#d4ffd4;padding:14px;border-radius:18px;border:2px solid #0a0;margin-top:18px;text-align:center;">
+                  ✅ ENTRADA CONFIRMADA<br><br>
+                  👤 ${data.reserva.nombre}<br>
+                  🚗 ${data.reserva.tipo}${data.reserva.placa ? ' — ' + data.reserva.placa : ''}<br>
+                  📍 Puesto ${data.reserva.puesto}<br><br>
+                  <strong>Puesto marcado como OCUPADO</strong>
+                </div>`;
+              } else {
+                resultEl.innerHTML = `<div style="background:#ffd4d4;padding:14px;border-radius:18px;border:2px solid #a00;margin-top:18px;text-align:center;">
+                  ❌ ${data.message}
+                </div>`;
+              }
+            } catch(e) {
+              resultEl.innerHTML = `<div style="background:#ffd4d4;padding:14px;border-radius:18px;border:2px solid #a00;margin-top:18px;">Error de conexión</div>`;
+            }
+          }
           return;
         }
       }
