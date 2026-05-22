@@ -262,8 +262,6 @@ body {
 .historial-item .estado.salida    { background: #ef4444; }   /* completada */
 .historial-item .estado.cancelada { background: #f97316; }   /* cancelada - naranja */
 .historial-item .estado.expirada  { background: #6b7280; }   /* expirada - gris */
-.historial-item .estado.pendiente { background: #f59e0b; }   /* pendiente - amarillo */
-.historial-item .estado.ocupado   { background: #3b82f6; }   /* ocupado - azul */
 .historial-empty { text-align: center; opacity: 0.5; margin-top: 60px; font-size: 15px; }
 
 /* ── ALERT ── */
@@ -1056,6 +1054,8 @@ onclick="go('s-admin-login')">
   <button class="vehicle-option" onclick="abrirReserva('Bicicleta')"><div class="vehicle-dot"></div> BICICLETA</button>
   <button class="vehicle-option" onclick="abrirReserva('Patineta')"><div class="vehicle-dot"></div> PATINETA</button>
   <div class="gap"></div>
+  <button id="btn-qr-entrada" class="btn-salida disabled" onclick="irAQREntrada()" style="background:#f59e0b;border-color:#d97706;">&#9654; QR PARA ENTRAR</button>
+  <div class="gap-sm"></div>
   <button id="btn-qr-salida" class="btn-salida disabled" onclick="irAQRSalida()">&#9654; QR PARA SALIR</button>
   <div class="gap-sm"></div>
   <button class="btn-bubble" onclick="go('s-historial')">HISTORIAL</button>
@@ -2126,9 +2126,7 @@ async function cargarHistorial() {
     if (!res.ok) throw new Error();
     const data = await res.json();
     reservas = data.map(r => Object.assign({}, r, {
-      estado:        r.estado === 'pendiente' ? 'Pendiente' :
-                     r.estado === 'ocupado' ? 'Ocupado' :
-                     r.estado === 'activa' ? 'Activa' :
+      estado:        r.estado === 'activa' ? 'Activa' :
                      r.estado === 'completada' ? 'Completada' :
                      r.estado === 'cancelada' ? 'Cancelada' :
                      r.estado === 'expirada' ? 'Expirada' : r.estado,
@@ -2150,7 +2148,7 @@ function iniciarTemporizador() {
   const countEl = document.getElementById('timer-count');
   const tipoEl  = document.getElementById('timer-tipo');
   if (!card) return;
-  const activa = reservas.find(r => r.estado === 'Pendiente' || r.estado === 'Ocupado' || r.estado === 'Activa' || r.estado === 'activa' || r.estado === 'pendiente' || r.estado === 'ocupado');
+  const activa = reservas.find(r => r.estado === 'Activa' || r.estado === 'activa');
   if (!activa) {
     card.classList.remove('visible');
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
@@ -2220,9 +2218,7 @@ function renderHistorial() {
       (r.placa && r.placa !== 'Bici' && r.placa !== 'S/P' ? ' — ' + r.placa : '') +
       (r.puesto ? ' · <strong style="color:#facc15;">Puesto ' + r.puesto + '</strong>' : '') +
       '<span class="estado ' +
-        (r.estado === 'Pendiente' ? 'pendiente' :
-         r.estado === 'Ocupado' ? 'ocupado' :
-         r.estado === 'Activa' ? '' :
+        (r.estado === 'Activa' ? '' :
          r.estado === 'Cancelada' ? 'cancelada' :
          r.estado === 'Expirada' ? 'expirada' : 'salida') +
       '">' + r.estado + '</span><br>' +
@@ -2234,20 +2230,40 @@ function renderHistorial() {
 
 // ─── BOTÓN SALIDA ────────────────────────────────
 function actualizarBotonSalida() {
+  // Botón QR entrada (solo cuando está pendiente)
+  const btnEntrada = document.getElementById('btn-qr-entrada');
+  if (btnEntrada) {
+    const pendiente = reservas.find(r => r.estado === 'Pendiente' || r.estado === 'pendiente');
+    if (pendiente) {
+      btnEntrada.classList.remove('disabled');
+      btnEntrada.innerHTML = '&#9654; QR PARA ENTRAR — ' + pendiente.tipo.toUpperCase();
+    } else {
+      btnEntrada.classList.add('disabled');
+      btnEntrada.innerHTML = '&#9654; QR PARA ENTRAR';
+    }
+  }
+  // Botón QR salida (solo cuando está ocupado)
   const btn = document.getElementById('btn-qr-salida');
   if (!btn) return;
-  const activa = reservas.find(r => r.estado === 'Ocupado' || r.estado === 'Activa');
-  if (activa) {
+  const ocupado = reservas.find(r => r.estado === 'Ocupado' || r.estado === 'ocupado');
+  if (ocupado) {
     btn.classList.remove('disabled');
-    btn.innerHTML = '&#9654; QR PARA SALIR — ' + activa.tipo.toUpperCase();
+    btn.innerHTML = '&#9654; QR PARA SALIR — ' + ocupado.tipo.toUpperCase();
   } else {
     btn.classList.add('disabled');
     btn.innerHTML = '&#9654; QR PARA SALIR';
   }
 }
 
+function irAQREntrada() {
+  const pendiente = reservas.find(r => r.estado === 'Pendiente' || r.estado === 'pendiente');
+  if (!pendiente) return;
+  mostrarQRReserva(pendiente);
+  go('s-reserva-ok');
+}
+
 function irAQRSalida() {
-  const activa = reservas.find(r => r.estado === 'Ocupado' || r.estado === 'Activa');
+  const activa = reservas.find(r => r.estado === 'Activa');
   if (!activa) return;
   const fechaF = activa.fecha
     ? new Date(activa.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
@@ -2275,7 +2291,7 @@ function irAQRSalida() {
 
 // ─── FINALIZAR RESERVA ───────────────────────────
 async function finalizarReserva() {
-  const activa = reservas.find(r => r.estado === 'Pendiente' || r.estado === 'Ocupado' || r.estado === 'Activa' || r.estado === 'activa' || r.estado === 'pendiente' || r.estado === 'ocupado');
+  const activa = reservas.find(r => r.estado === 'Activa' || r.estado === 'activa');
   if (!activa) return;
 
   try {
@@ -2493,64 +2509,21 @@ async function iniciarAdminQR() {
           imageData.height
         );
         if (code) {
+          document.getElementById(
+            "admin-qr-result"
+          ).innerHTML =   `
+            <div style="
+              background:#d4ffd4;
+              padding:14px;
+              border-radius:18px;
+              border:2px solid #0a0;
+              margin-top:18px;
+            ">
+              QR ESCANEADO<br><br>
+              ${code.data}
+            </div>
+          `;
           stream.getTracks().forEach(t => t.stop());
-          const resultEl = document.getElementById("admin-qr-result");
-          resultEl.innerHTML = `<div style="text-align:center;padding:14px;font-weight:bold;">⏳ Procesando QR...</div>`;
-
-          let qrData = {};
-          try { qrData = JSON.parse(code.data); } catch(e) { qrData = { token: code.data }; }
-
-          const esSalida = qrData.accion === 'salida' || (qrData.tokenSalida) || code.data.includes('SALIDA-');
-
-          if (esSalida) {
-            // QR de salida → ocupado a completada
-            const tokenSalida = qrData.tokenSalida || code.data;
-            try {
-              const resp = await fetch(API + '/reservas/salida-qr', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ qr_salida_token: tokenSalida })
-              });
-              const data = await resp.json();
-              if (resp.ok) {
-                resultEl.innerHTML = `<div style="background:#d4ffd4;padding:14px;border-radius:18px;border:2px solid #0a0;margin-top:18px;text-align:center;">
-                  ✅ SALIDA REGISTRADA<br><br>Puesto liberado correctamente
-                </div>`;
-              } else {
-                resultEl.innerHTML = `<div style="background:#ffd4d4;padding:14px;border-radius:18px;border:2px solid #a00;margin-top:18px;text-align:center;">
-                  ❌ ${data.message}
-                </div>`;
-              }
-            } catch(e) {
-              resultEl.innerHTML = `<div style="background:#ffd4d4;padding:14px;border-radius:18px;border:2px solid #a00;margin-top:18px;">Error de conexión</div>`;
-            }
-          } else {
-            // QR de entrada → pendiente a ocupado
-            const tokenEntrada = qrData.token || code.data;
-            try {
-              const resp = await fetch(API + '/reservas/validar-qr', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ qr_token: tokenEntrada })
-              });
-              const data = await resp.json();
-              if (resp.ok) {
-                resultEl.innerHTML = `<div style="background:#d4ffd4;padding:14px;border-radius:18px;border:2px solid #0a0;margin-top:18px;text-align:center;">
-                  ✅ ENTRADA CONFIRMADA<br><br>
-                  👤 ${data.reserva.nombre}<br>
-                  🚗 ${data.reserva.tipo}${data.reserva.placa ? ' — ' + data.reserva.placa : ''}<br>
-                  📍 Puesto ${data.reserva.puesto}<br><br>
-                  <strong>Puesto marcado como OCUPADO</strong>
-                </div>`;
-              } else {
-                resultEl.innerHTML = `<div style="background:#ffd4d4;padding:14px;border-radius:18px;border:2px solid #a00;margin-top:18px;text-align:center;">
-                  ❌ ${data.message}
-                </div>`;
-              }
-            } catch(e) {
-              resultEl.innerHTML = `<div style="background:#ffd4d4;padding:14px;border-radius:18px;border:2px solid #a00;margin-top:18px;">Error de conexión</div>`;
-            }
-          }
           return;
         }
       }
